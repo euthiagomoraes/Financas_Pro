@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#071d22" />
+  <title>Finanças Pro</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div id="loginView" class="login-view hidden">
+    <div class="login-shell">
+      <div class="login-brand">
+        <div class="brand-mark">↗</div>
+        <div><strong>Finanças <span>Pro</span></strong><small>Seu dinheiro, no controle</small></div>
+      </div>
+      <div class="login-card">
+        <h1>Bem-vindo de volta</h1>
+        <p>Entre para acompanhar suas finanças.</p>
+        <form id="loginForm">
+          <label>E-mail<input id="loginEmail" type="email" placeholder="seu@email.com" required></label>
+          <label>Senha<input id="loginPassword" type="password" placeholder="••••••••" required></label>
+          <button class="btn btn-primary btn-block" type="submit">Entrar</button>
+        </form>
+        <div class="login-hint">Protótipo local: qualquer e-mail e senha são aceitos.</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="appView" class="app hidden">
+    <aside class="sidebar" id="sidebar">
+      <div class="brand">
+        <div class="brand-mark">↗</div>
+        <div><strong>Finanças <span>Pro</span></strong><small>Seu dinheiro, no controle</small></div>
+      </div>
+
+      <nav class="nav">
+        <button class="nav-item active" data-route="dashboard"><span class="ico">⌂</span>Dashboard</button>
+        <button class="nav-item" data-route="contas"><span class="ico">▣</span>Contas</button>
+        <button class="nav-item" data-route="emprestimos"><span class="ico">▤</span>Empréstimos</button>
+        <button class="nav-item" data-route="calendario"><span class="ico">□</span>Calendário</button>
+        <button class="nav-item" data-route="relatorios"><span class="ico">▥</span>Relatórios</button>
+      </nav>
+
+      <div class="sidebar-profile">
+        <div class="avatar">JL</div>
+        <div class="profile-copy"><strong id="profileName">Jessyca Lisboa</strong><small id="profileEmail">jessyca@exemplo.com</small></div>
+        <button id="logoutBtn" class="icon-btn" title="Sair">↪</button>
+      </div>
+      <div class="sidebar-quote">Planejamento hoje,<br>tranquilidade amanhã.<span>♡</span></div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <button id="mobileMenu" class="icon-btn mobile-only">☰</button>
+        <div>
+          <h1 id="pageTitle">Olá, Jessyca! 👋</h1>
+          <p id="pageSubtitle">Veja como estão suas finanças hoje.</p>
+        </div>
+        <div class="top-actions">
+          <span id="currentDate" class="date-label"></span>
+          <button class="icon-btn notification" title="Notificações">♧<i></i></button>
+          <div class="top-avatar">JL</div>
+        </div>
+      </header>
+      <section id="pageContent"></section>
+    </main>
+  </div>
+
+  <div id="modalRoot"></div>
+  <div id="toastRoot"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
