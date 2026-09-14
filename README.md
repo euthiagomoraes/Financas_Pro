@@ -1,38 +1,45 @@
-# Finanças Pro — Protótipo Frontend
+# Finanças Pro — Revisão 2
 
-Protótipo funcional do sistema financeiro baseado no design aprovado.
+Versão revisada do Finanças Pro, preparada para uso com Supabase.
 
-## Incluído
-- Login de protótipo
-- Dashboard moderno e responsivo
-- Contas da casa separadas dos empréstimos
-- Cadastro, edição, exclusão e pagamento de contas
-- Cadastro de empréstimos
-- Geração automática das parcelas
-- Tela de detalhes do empréstimo
-- Registro/desfazimento de pagamentos de parcelas
-- Cálculo de total previsto, total pago e saldo restante
-- Calendário mensal com contas e parcelas
-- Relatórios
-- Navegação SPA sem recarregar a página
-- Persistência local via localStorage
-- Layout desktop/tablet/mobile
+## Alterações da Revisão 2
 
-## Próxima etapa
-Substituir o localStorage pelo Supabase:
-1. Supabase Auth
-2. tabela `perfis`
-3. tabela `categorias`
-4. tabela `contas`
-5. tabela `emprestimos`
-6. tabela `emprestimo_parcelas`
-7. RLS
-8. triggers/funções para parcelas
-9. consultas agregadas para dashboard e relatórios
+- Menu lateral corrigido no celular: abre sobre o conteúdo com fundo de bloqueio e fecha ao selecionar uma página.
+- Layout responsivo para celular, tablet e desktop.
+- Removidos os registros fictícios do JavaScript e do HTML.
+- Dashboard inicia zerado quando o banco não possui registros.
+- Removida a dependência de `localStorage` para os dados financeiros.
+- Login usando Supabase Auth.
+- Contas, empréstimos, parcelas e categorias são lidos do Supabase para o usuário autenticado.
+- Cards do Dashboard são interativos e levam para a tela correspondente.
+- Cards de Pagas e Pendentes já abrem a tela de Contas com o filtro correspondente.
+- Gráfico do Dashboard usa os dados reais das contas; sem registros, mostra estado vazio.
+- Calendário usa a data atual e os dados reais.
+- Tratamento de erros para evitar tela branca.
+- UTF-8 configurado no HTML e tipografia revisada para melhor leitura.
+
+## Supabase
+
+O projeto utiliza a chave publicável do Supabase no navegador. O acesso aos dados deve ser protegido pelas políticas RLS do projeto.
+
+Tabelas esperadas nesta versão:
+
+- `profiles`
+- `categorias`
+- `contas`
+- `emprestimos`
+- `emprestimo_parcelas`
+
+As consultas financeiras filtram pelo usuário autenticado (`usuario_id`).
 
 ## Como executar
-Abra `index.html` no navegador. Para um ambiente local recomendado, rode um servidor estático, por exemplo:
-`python -m http.server 5500`
-e acesse `http://localhost:5500`.
 
-Observação: os dados atuais são dados demonstrativos e ficam no navegador.
+Use um servidor estático. Por exemplo:
+
+```bash
+python -m http.server 5500
+```
+
+Depois abra `http://localhost:5500`.
+
+Não abra o HTML por `file://` se o navegador bloquear recursos externos.

@@ -2,298 +2,80 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-  <meta name="theme-color" content="#071d22">
-  <meta
-    name="description"
-    content="Finanças Pro - Controle financeiro pessoal"
-  >
-
-  <title>Finanças Pro</title>
-
-  <!-- Fonte -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#071d22" />
+  <title>Finan&#xE7;as Pro</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link
-    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
-    rel="stylesheet"
-  >
-
-  <!-- CSS -->
-  <link rel="stylesheet" href="styles.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css" />
 </head>
-
 <body>
-
-  <!-- =========================================================
-       TELA DE LOGIN
-       ========================================================= -->
-
   <div id="loginView" class="login-view hidden">
-
     <div class="login-shell">
-
       <div class="login-brand">
         <div class="brand-mark">&#x2197;</div>
-
-        <div>
-          <strong>Finan&#xE7;as <span>Pro</span></strong>
-          <small>Seu dinheiro, no controle</small>
-        </div>
+        <div><strong>Finan&#xE7;as <span>Pro</span></strong><small>Seu dinheiro, no controle</small></div>
       </div>
-
       <div class="login-card">
-
         <h1>Bem-vindo de volta</h1>
-
-        <p>
-          Entre para acompanhar suas finan&#xE7;as.
-        </p>
-
+        <p>Entre para acompanhar suas finan&#xE7;as.</p>
         <form id="loginForm">
-
-          <label>
-            E-mail
-            <input
-              id="loginEmail"
-              type="email"
-              placeholder="seu@email.com"
-              autocomplete="email"
-              required
-            >
-          </label>
-
-          <label>
-            Senha
-            <input
-              id="loginPassword"
-              type="password"
-              placeholder="&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;"
-              autocomplete="current-password"
-              required
-            >
-          </label>
-
-          <button
-            id="loginButton"
-            class="btn btn-primary btn-block"
-            type="submit"
-          >
-            Entrar
-          </button>
-
+          <label>E-mail<input id="loginEmail" type="email" placeholder="seu@email.com" required></label>
+          <label>Senha<input id="loginPassword" type="password" placeholder="&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;" required></label>
+          <button class="btn btn-primary btn-block" type="submit">Entrar</button>
         </form>
-
-        <div class="login-hint">
-          Acesse com seu e-mail e senha cadastrados.
-        </div>
-
+        <div class="login-hint">Prot&#xF3;tipo local: qualquer e-mail e senha s&#xE3;o aceitos.</div>
       </div>
-
     </div>
-
   </div>
 
-
-  <!-- =========================================================
-       APLICAÇÃO PRINCIPAL
-       ========================================================= -->
-
+  <div id="appLoading" class="app-loading">Carregando…</div>
   <div id="appView" class="app hidden">
-
-    <!-- SIDEBAR -->
-
+    <div id="mobileOverlay" class="mobile-overlay"></div>
     <aside class="sidebar" id="sidebar">
-
       <div class="brand">
-
         <div class="brand-mark">&#x2197;</div>
-
-        <div>
-          <strong>Finan&#xE7;as <span>Pro</span></strong>
-          <small>Seu dinheiro, no controle</small>
-        </div>
-
+        <div><strong>Finan&#xE7;as <span>Pro</span></strong><small>Seu dinheiro, no controle</small></div>
       </div>
-
-
-      <!-- MENU -->
 
       <nav class="nav">
-
-        <button
-          class="nav-item active"
-          data-route="dashboard"
-        >
-          <span class="ico">&#x2302;</span>
-          Dashboard
-        </button>
-
-        <button
-          class="nav-item"
-          data-route="contas"
-        >
-          <span class="ico">&#x25A3;</span>
-          Contas
-        </button>
-
-        <button
-          class="nav-item"
-          data-route="emprestimos"
-        >
-          <span class="ico">&#x25A4;</span>
-          Empr&#xE9;stimos
-        </button>
-
-        <button
-          class="nav-item"
-          data-route="calendario"
-        >
-          <span class="ico">&#x25A1;</span>
-          Calend&#xE1;rio
-        </button>
-
-        <button
-          class="nav-item"
-          data-route="relatorios"
-        >
-          <span class="ico">&#x25A5;</span>
-          Relat&#xF3;rios
-        </button>
-
+        <button class="nav-item active" data-route="dashboard"><span class="ico">&#x2302;</span>Dashboard</button>
+        <button class="nav-item" data-route="contas"><span class="ico">&#x25A3;</span>Contas</button>
+        <button class="nav-item" data-route="emprestimos"><span class="ico">&#x25A4;</span>Empr&#xE9;stimos</button>
+        <button class="nav-item" data-route="calendario"><span class="ico">&#x25A1;</span>Calend&#xE1;rio</button>
+        <button class="nav-item" data-route="relatorios"><span class="ico">&#x25A5;</span>Relat&#xF3;rios</button>
       </nav>
 
-
-      <!-- PERFIL -->
-
       <div class="sidebar-profile">
-
-        <div
-          class="avatar"
-          id="profileAvatar"
-        >
-          JL
-        </div>
-
-        <div class="profile-copy">
-
-          <strong id="profileName">
-            Jessyca Lisboa
-          </strong>
-
-          <small id="profileEmail">
-            jessyca@exemplo.com
-          </small>
-
-        </div>
-
-        <button
-          id="logoutBtn"
-          class="icon-btn"
-          title="Sair"
-        >
-          &#x21AA;
-        </button>
-
+        <div class="avatar" id="profileAvatar">U</div>
+        <div class="profile-copy"><strong id="profileName">Usuário</strong><small id="profileEmail"></small></div>
+        <button id="logoutBtn" class="icon-btn" title="Sair">&#x21AA;</button>
       </div>
-
-
-      <div class="sidebar-quote">
-        Planejamento hoje,<br>
-        tranquilidade amanh&#xE3;.
-        <span>&#x2661;</span>
-      </div>
-
+      <div class="sidebar-quote">Planejamento hoje,<br>tranquilidade amanh&#xE3;.<span>&#x2661;</span></div>
     </aside>
 
-
-    <!-- CONTEÚDO PRINCIPAL -->
-
     <main class="main">
-
       <header class="topbar">
-
-        <button
-          id="mobileMenu"
-          class="icon-btn mobile-only"
-          type="button"
-        >
-          &#x2630;
-        </button>
-
+        <button id="mobileMenu" class="icon-btn mobile-only">&#x2630;</button>
         <div>
-
-          <h1 id="pageTitle">
-            Ol&#xE1;, Jessyca! &#x1F44B;
-          </h1>
-
-          <p id="pageSubtitle">
-            Veja como est&#xE3;o suas finan&#xE7;as hoje.
-          </p>
-
+          <h1 id="pageTitle">Ol&#xE1;, Jessyca! &#x1F44B;</h1>
+          <p id="pageSubtitle">Veja como est&#xE3;o suas finan&#xE7;as hoje.</p>
         </div>
-
-
         <div class="top-actions">
-
-          <span
-            id="currentDate"
-            class="date-label"
-          ></span>
-
-          <button
-            class="icon-btn notification"
-            title="Notifica&#xE7;&#xF5;es"
-            type="button"
-          >
-            &#x2667;
-            <i></i>
-          </button>
-
-          <div
-            id="topAvatar"
-            class="top-avatar"
-          >
-            JL
-          </div>
-
+          <span id="currentDate" class="date-label"></span>
+          <button class="icon-btn notification" title="Notifica&#xE7;&#xF5;es">&#x2667;<i></i></button>
+          <div class="top-avatar" id="topAvatar">U</div>
         </div>
-
       </header>
-
-
-      <!-- PÁGINA DINÂMICA -->
-
       <section id="pageContent"></section>
-
     </main>
-
   </div>
 
-
-  <!-- MODAIS -->
-
   <div id="modalRoot"></div>
-
-  <!-- TOASTS -->
-
   <div id="toastRoot"></div>
 
-
-  <!-- =========================================================
-       SUPABASE
-       DEVE SER CARREGADO ANTES DO APP.JS
-       ========================================================= -->
-
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-
-  <!-- =========================================================
-       APLICAÇÃO
-       ========================================================= -->
-
   <script src="app.js"></script>
-
 </body>
 </html>
