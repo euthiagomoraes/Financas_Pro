@@ -11,7 +11,7 @@ const SUPABASE_URL = "https://bcepclvnyjobytqasodx.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY =
   "sb_publishable_dtzJI72uUuKsE-bwMwW3Qg_qOpjHkeO";
 
-const supabase = window.supabase.createClient(
+const supabaseClient = window.supabase.createClient(
   SUPABASE_URL,
   SUPABASE_PUBLISHABLE_KEY
 );
@@ -566,7 +566,7 @@ async function initAuth() {
     const {
       data,
       error
-    } = await supabase.auth.getSession();
+    } = await supabaseClient.auth.getSession();
 
 
     if (error) {
@@ -608,7 +608,7 @@ async function initAuth() {
      OBSERVA ALTERAÇÕES DE LOGIN
   ================================= */
 
-  supabase.auth.onAuthStateChange(
+  supabaseClient.auth.onAuthStateChange(
     (_event, session) => {
 
       setTimeout(() => {
@@ -679,7 +679,7 @@ $("#loginForm")?.addEventListener(
         data,
         error
       } =
-        await supabase.auth.signInWithPassword({
+        await supabaseClient.auth.signInWithPassword({
           email,
           password
         });
@@ -775,7 +775,7 @@ $("#logoutBtn")?.addEventListener(
       const {
         error
       } =
-        await supabase.auth.signOut();
+        await supabaseClient.auth.signOut();
 
 
       if (error) {
