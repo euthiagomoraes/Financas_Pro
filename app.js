@@ -169,9 +169,9 @@ function bindPage(){
   $("[data-new-conta]")?.addEventListener("click",()=>newConta());
   $("[data-new-loan]")?.addEventListener("click",newLoan);
   $$("[data-edit-conta]").forEach(b=>b.onclick=()=>newConta(b.dataset.editConta));
-  $$("[data-delete-conta]").forEach(b=>b.onclick=()=>{if(confirm("Excluir esta conta?")){state.contas=state.contas.filter(x=>x.id!=b.dataset.deleteConta);save();render();toast("Conta excluída")})});
+  $$("[data-delete-conta]").forEach(b=>b.onclick=()=>{if(confirm("Excluir esta conta?")){state.contas=state.contas.filter(x=>x.id!=b.dataset.deleteConta);save();render();toast("Conta excluída")}});
   $$("[data-pay]").forEach(b=>b.onclick=()=>payConta(b.dataset.pay));
-  $$("[data-delete-loan]").forEach(b=>b.onclick=()=>{if(confirm("Excluir este empréstimo e suas parcelas?")){state.emprestimos=state.emprestimos.filter(x=>x.id!=b.dataset.deleteLoan);save();render();toast("Empréstimo excluído")})});
+  $$("[data-delete-loan]").forEach(b=>b.onclick=()=>{if(confirm("Excluir este empréstimo e suas parcelas?")){state.emprestimos=state.emprestimos.filter(x=>x.id!=b.dataset.deleteLoan);save();render();toast("Empréstimo excluído")}});
   $$("[data-loan-view]").forEach(b=>b.onclick=()=>viewLoan(b.dataset.loanView));
   $$("[data-cal-prev]").forEach(b=>b.onclick=()=>{calendarDate.setMonth(calendarDate.getMonth()-1);render()});
   $$("[data-cal-next]").forEach(b=>b.onclick=()=>{calendarDate.setMonth(calendarDate.getMonth()+1);render()});
