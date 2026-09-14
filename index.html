@@ -4,75 +4,226 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#071d22" />
-  <title>Finan&#xE7;as Pro</title>
+  <title>Finanças Pro</title>
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
   <link rel="stylesheet" href="styles.css" />
 </head>
+
 <body>
+
+  <!-- LOGIN -->
   <div id="loginView" class="login-view hidden">
     <div class="login-shell">
+
       <div class="login-brand">
         <div class="brand-mark">&#x2197;</div>
-        <div><strong>Finan&#xE7;as <span>Pro</span></strong><small>Seu dinheiro, no controle</small></div>
+
+        <div>
+          <strong>Finanças <span>Pro</span></strong>
+          <small>Seu dinheiro, no controle</small>
+        </div>
       </div>
+
       <div class="login-card">
+
         <h1>Bem-vindo de volta</h1>
-        <p>Entre para acompanhar suas finan&#xE7;as.</p>
+
+        <p>Entre para acompanhar suas finanças.</p>
+
         <form id="loginForm">
-          <label>E-mail<input id="loginEmail" type="email" placeholder="seu@email.com" required></label>
-          <label>Senha<input id="loginPassword" type="password" placeholder="&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;" required></label>
-          <button class="btn btn-primary btn-block" type="submit">Entrar</button>
+
+          <label>
+            E-mail
+            <input
+              id="loginEmail"
+              type="email"
+              placeholder="seu@email.com"
+              autocomplete="email"
+              required
+            >
+          </label>
+
+          <label>
+            Senha
+            <input
+              id="loginPassword"
+              type="password"
+              placeholder="••••••••"
+              autocomplete="current-password"
+              required
+            >
+          </label>
+
+          <button
+            class="btn btn-primary btn-block"
+            type="submit"
+            id="loginButton"
+          >
+            Entrar
+          </button>
+
         </form>
-        <div class="login-hint">Prot&#xF3;tipo local: qualquer e-mail e senha s&#xE3;o aceitos.</div>
+
+        <div class="login-hint">
+          Acesse com o e-mail e a senha cadastrados.
+        </div>
+
       </div>
     </div>
   </div>
 
+
+  <!-- SISTEMA -->
   <div id="appView" class="app hidden">
+
     <aside class="sidebar" id="sidebar">
+
       <div class="brand">
+
         <div class="brand-mark">&#x2197;</div>
-        <div><strong>Finan&#xE7;as <span>Pro</span></strong><small>Seu dinheiro, no controle</small></div>
+
+        <div>
+          <strong>Finanças <span>Pro</span></strong>
+          <small>Seu dinheiro, no controle</small>
+        </div>
+
       </div>
+
 
       <nav class="nav">
-        <button class="nav-item active" data-route="dashboard"><span class="ico">&#x2302;</span>Dashboard</button>
-        <button class="nav-item" data-route="contas"><span class="ico">&#x25A3;</span>Contas</button>
-        <button class="nav-item" data-route="emprestimos"><span class="ico">&#x25A4;</span>Empr&#xE9;stimos</button>
-        <button class="nav-item" data-route="calendario"><span class="ico">&#x25A1;</span>Calend&#xE1;rio</button>
-        <button class="nav-item" data-route="relatorios"><span class="ico">&#x25A5;</span>Relat&#xF3;rios</button>
+
+        <button class="nav-item active" data-route="dashboard">
+          <span class="ico">&#x2302;</span>
+          Dashboard
+        </button>
+
+        <button class="nav-item" data-route="contas">
+          <span class="ico">&#x25A3;</span>
+          Contas
+        </button>
+
+        <button class="nav-item" data-route="emprestimos">
+          <span class="ico">&#x25A4;</span>
+          Empréstimos
+        </button>
+
+        <button class="nav-item" data-route="calendario">
+          <span class="ico">&#x25A1;</span>
+          Calendário
+        </button>
+
+        <button class="nav-item" data-route="relatorios">
+          <span class="ico">&#x25A5;</span>
+          Relatórios
+        </button>
+
       </nav>
 
+
       <div class="sidebar-profile">
-        <div class="avatar">JL</div>
-        <div class="profile-copy"><strong id="profileName">Jessyca Lisboa</strong><small id="profileEmail">jessyca@exemplo.com</small></div>
-        <button id="logoutBtn" class="icon-btn" title="Sair">&#x21AA;</button>
+
+        <div class="avatar" id="profileAvatar">JL</div>
+
+        <div class="profile-copy">
+
+          <strong id="profileName">
+            Jessyca Lisboa
+          </strong>
+
+          <small id="profileEmail">
+            jessyca@exemplo.com
+          </small>
+
+        </div>
+
+        <button
+          id="logoutBtn"
+          class="icon-btn"
+          title="Sair"
+          type="button"
+        >
+          &#x21AA;
+        </button>
+
       </div>
-      <div class="sidebar-quote">Planejamento hoje,<br>tranquilidade amanh&#xE3;.<span>&#x2661;</span></div>
+
+
+      <div class="sidebar-quote">
+        Planejamento hoje,<br>
+        tranquilidade amanhã.
+        <span>&#x2661;</span>
+      </div>
+
     </aside>
 
+
     <main class="main">
+
       <header class="topbar">
-        <button id="mobileMenu" class="icon-btn mobile-only">&#x2630;</button>
+
+        <button
+          id="mobileMenu"
+          class="icon-btn mobile-only"
+          type="button"
+        >
+          &#x2630;
+        </button>
+
         <div>
-          <h1 id="pageTitle">Ol&#xE1;, Jessyca! &#x1F44B;</h1>
-          <p id="pageSubtitle">Veja como est&#xE3;o suas finan&#xE7;as hoje.</p>
+
+          <h1 id="pageTitle">
+            Olá, Jessyca! &#x1F44B;
+          </h1>
+
+          <p id="pageSubtitle">
+            Veja como estão suas finanças hoje.
+          </p>
+
         </div>
+
+
         <div class="top-actions">
+
           <span id="currentDate" class="date-label"></span>
-          <button class="icon-btn notification" title="Notifica&#xE7;&#xF5;es">&#x2667;<i></i></button>
-          <div class="top-avatar">JL</div>
+
+          <button
+            class="icon-btn notification"
+            title="Notificações"
+            type="button"
+          >
+            &#x2667;<i></i>
+          </button>
+
+          <div class="top-avatar" id="topAvatar">
+            JL
+          </div>
+
         </div>
+
       </header>
+
+
       <section id="pageContent"></section>
+
     </main>
+
   </div>
 
+
   <div id="modalRoot"></div>
+
   <div id="toastRoot"></div>
 
+
+  <!-- SUPABASE -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <!-- APLICAÇÃO -->
   <script src="app.js"></script>
+
 </body>
 </html>
