@@ -139,3 +139,8 @@ create policy "avatars_public_read" on storage.objects for select using (bucket_
 create policy "avatars_own_insert" on storage.objects for insert with check (bucket_id='avatars' and (storage.foldername(name))[1] = auth.uid()::text);
 create policy "avatars_own_update" on storage.objects for update using (bucket_id='avatars' and (storage.foldername(name))[1] = auth.uid()::text) with check (bucket_id='avatars' and (storage.foldername(name))[1] = auth.uid()::text);
 create policy "avatars_own_delete" on storage.objects for delete using (bucket_id='avatars' and (storage.foldername(name))[1] = auth.uid()::text);
+
+
+-- Revisão 18 — campo usado pelo checkbox Conta recorrente.
+alter table public.contas add column if not exists recorrente boolean not null default false;
+create index if not exists idx_contas_usuario_recorrente on public.contas(usuario_id,recorrente);
