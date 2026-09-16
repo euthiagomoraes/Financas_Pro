@@ -9,3 +9,26 @@
 .login-heading{margin-bottom:24px}.login-heading .eyebrow{display:inline-block;margin-bottom:8px}.login-heading h1{font:800 29px Manrope,sans-serif;margin:0 0 7px;color:#173b2d}.login-heading p{margin:0;color:#718078;line-height:1.55;font-size:14px}
 .login-form{display:grid;gap:16px}.login-form .field{margin:0}.input-icon{position:relative}.input-icon>svg{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:#789086;pointer-events:none}.input-icon input{width:100%;padding:13px 46px 13px 44px;border:1px solid #d8e0da;border-radius:13px;background:#fbfcfa;outline:none;font:500 14px Manrope,sans-serif;color:#173b2d;box-sizing:border-box}.input-icon input:focus{border-color:#2c936e;box-shadow:0 0 0 4px rgba(44,147,110,.10)}.password-toggle{position:absolute;right:8px;top:50%;transform:translateY(-50%);border:0;background:transparent;color:#718078;padding:8px;cursor:pointer}.login-submit{width:100%;justify-content:center;height:48px;margin-top:2px}.login-submit:disabled{opacity:.7;cursor:wait}.login-error{padding:11px 13px;border-radius:12px;background:#fff0f0;color:#b43f49;border:1px solid #f0c8cb;font-size:13px;line-height:1.4}.login-error[hidden]{display:none}.login-footer{text-align:center;color:#8a958f;font-size:11px;margin-top:20px;line-height:1.5}.login-glow{position:absolute;width:360px;height:360px;border-radius:50%;filter:blur(10px);opacity:.42}.login-glow-a{background:#cde7d8;top:-180px;right:-100px}.login-glow-b{background:#eadbb5;bottom:-210px;left:-140px}
 @media(max-width:520px){.login-page{padding:16px}.login-card{padding:26px 20px;border-radius:23px}.login-heading h1{font-size:25px}.login-brand{margin-bottom:28px}}
+
+/* Revisão 7 — menu recolhível e campos monetários mobile */
+.currency-input{font-variant-numeric:tabular-nums;text-align:right;font-weight:700;color:var(--forest)}
+.currency-input[readonly]{background:#eef5ef;color:#507268;cursor:default}
+.sidebar-toggle{margin-top:10px;width:100%;min-height:38px;border:1px solid rgba(255,255,255,.10);border-radius:11px;background:rgba(255,255,255,.05);color:#bcd6ce;display:flex;align-items:center;justify-content:center;gap:8px;font-size:11px;font-weight:700}
+.sidebar-toggle:hover{background:rgba(24,177,132,.16);color:#fff}
+@media(min-width:761px){
+  .sidebar{transition:width .22s ease,padding .22s ease}
+  .main{transition:margin-left .22s ease}
+  .sidebar.collapsed{width:78px;padding-left:10px;padding-right:10px}
+  .sidebar.collapsed + .main{margin-left:78px}
+  .sidebar.collapsed .brand{justify-content:center;padding-left:0;padding-right:0}
+  .sidebar.collapsed .brand>div:last-child,.sidebar.collapsed .nav button span,.sidebar.collapsed .sidebar-toggle span,.sidebar.collapsed .quote,.sidebar.collapsed .user-mini>div:nth-child(2),.sidebar.collapsed .logout{display:none}
+  .sidebar.collapsed .nav button{justify-content:center;padding-left:10px;padding-right:10px}
+  .sidebar.collapsed .nav button.active:before{display:none}
+  .sidebar.collapsed .sidebar-toggle{margin-left:auto;margin-right:auto;width:42px}
+  .sidebar.collapsed .user-mini{justify-content:center;padding-left:0;padding-right:0}
+}
+@media(max-width:760px){
+  .field input,.field select,.field textarea{min-height:46px;font-size:16px}
+  .currency-input{font-size:17px;min-height:48px}
+  .sidebar.collapsed{width:280px}
+}
