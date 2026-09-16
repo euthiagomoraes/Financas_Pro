@@ -61,3 +61,19 @@
   .content{padding-left:10px;padding-right:10px}.kpis{gap:7px}.kpi{padding:11px}.kpi h3{font-size:15px}.kpi-icon{width:31px;height:31px}
   .mobile-bottom{height:64px}.mobile-bottom button{font-size:8px}
 }
+
+/* Revisão 9 — calendário mensal em Contas, parcelas e status por data */
+.status-button{border:0;cursor:pointer;font:700 10px 'DM Sans',sans-serif}
+.status.today{background:#fff5dc;color:#a97818}
+.status.gold{background:#fbf1d9;color:#9c7527}
+.status.soft{background:#eef2ef;color:#65736e}
+.parcel-list{display:grid;gap:8px;max-height:58vh;overflow:auto}
+.parcel-row{display:grid;grid-template-columns:42px 1fr auto auto;align-items:center;gap:10px;padding:11px 12px;border:1px solid var(--line);border-radius:13px;background:#fbfcf8}
+.parcel-number{width:34px;height:34px;border-radius:10px;background:#e8f2ed;color:var(--forest);display:grid;place-items:center;font-weight:800;font-size:11px}
+.parcel-copy strong{display:block;font-size:12px}.parcel-copy small{display:block;color:var(--muted);font-size:10px;margin-top:2px}
+@media(max-width:760px){
+  .input-icon input,.login-form input,.field input,.field select,.field textarea,.search{font-size:16px!important}
+  .parcel-row{grid-template-columns:36px minmax(0,1fr) auto;gap:8px}.parcel-row .parcel-value{grid-column:2}.parcel-row .status-button{grid-column:3;grid-row:1 / span 2}
+}
+.loan-card-clickable{cursor:pointer;transition:transform .18s ease,box-shadow .18s ease}.loan-card-clickable:hover{transform:translateY(-2px);box-shadow:0 16px 40px rgba(11,54,45,.12)}.loan-card-clickable:focus-visible{outline:3px solid rgba(25,168,126,.25);outline-offset:2px}
+.loan-detail-head{padding:12px 0 15px;border-bottom:1px solid var(--line);margin-bottom:12px}.loan-detail-head p{margin:3px 0}

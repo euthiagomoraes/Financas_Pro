@@ -1,27 +1,11 @@
-# Finanças Pro — Revisão 6
+# Finanças Pro — Revisão 9
 
-Redesign mobile-first inspirado no template aprovado: verde floresta, creme, verde esmeralda e dourado, com cartões arredondados, navegação inferior no mobile e sidebar no desktop.
+Aplicação financeira mobile-first com Supabase Auth/Database.
 
-## Funcionalidades
-- Login via Supabase Auth já existente.
-- Dashboard sem dados fictícios.
-- Contas: lançamento, filtros, pagamento e exclusão.
-- Empréstimos: cadastro com geração das parcelas relacionadas.
-- Calendário: contas, parcelas e assinaturas.
-- Relatórios por categoria e compromissos.
-- Categorias e contas recorrentes.
-- Assinaturas: até 10 serviços, com logos via Simple Icons CDN; Netflix, Amazon Prime, Uber, YouTube Premium, Spotify, Disney+, Max, iCloud+, Google One e Prime Video.
-- Relacionamento assinatura → conta recorrente → conta.
-- Perfil com alteração de nome e foto armazenada no Supabase Storage.
-- Responsivo mobile-first, com bottom navigation e menu lateral sobreposto.
-
-## Supabase
-1. Abra o SQL Editor do projeto.
-2. Execute `supabase.sql`.
-3. A aplicação usa as tabelas existentes e adiciona `assinaturas`; `avatar_url` é adicionado ao legado `perfis` para compatibilidade.
-
-## Arquivos
-- `index.html`
-- `styles.css`
-- `app.js`
-- `supabase.sql`
+## Ajustes desta revisão
+- Categorias padrão separadas por tipo interno: `DESPESA` e `RECEITA`, criadas automaticamente por usuário sem duplicação.
+- Tela **Contas** mostra o previsto do mês em uma única lista, incluindo contas cadastradas, assinaturas ativas e parcelas de empréstimos.
+- Status das contas reais é clicável: conta paga pode voltar para pendente; conta não paga aparece como **Vence hoje** quando o vencimento é hoje e **Pendente** nos demais dias.
+- Clique em um empréstimo abre a relação completa de parcelas.
+- Campos de formulário mobile usam fonte mínima de 16px e viewport sem zoom automático para evitar ampliação ao tocar nos inputs.
+- Mantido Supabase como fonte dos dados, sem registros fictícios.
