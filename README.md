@@ -9,6 +9,12 @@
 - A alteração de status tenta os formatos `pago/pendente` e `Pago/Pendente` para compatibilidade com a restrição existente no Supabase.
 - O botão de status das parcelas é vinculado também dentro dos modais.
 
+## Ajuste financeiro do dashboard e relatórios
+- O total de **Contas do mês** soma contas avulsas, parcelas de empréstimos e assinaturas ativas.
+- Os indicadores **Pago** e **Pendente** consideram os mesmos lançamentos consolidados.
+- O gráfico dos últimos 6 meses inclui contas avulsas, empréstimos e assinaturas.
+- A aba **Relatórios** usa a mesma consolidação mensal, evitando divergência com o dashboard.
+
 ## Publicação
 1. Substitua os arquivos do projeto local.
 2. Teste no navegador:
@@ -24,3 +30,9 @@ git add .
 git commit -m "Revisao 19 - detalhes e status das parcelas"
 git push origin main
 ```
+
+
+## Ajuste — Aba Quitados
+- Um empréstimo é exibido em **Quitados** somente quando todas as suas parcelas cadastradas estiverem pagas.
+- O status exibido no cartão é calculado automaticamente a partir das parcelas, sem depender apenas do campo `emprestimos.status`.
+- A aba **Ativos** não exibe empréstimos totalmente quitados.
