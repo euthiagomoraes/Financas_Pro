@@ -13,6 +13,19 @@ const monthName=d=>d.toLocaleDateString('pt-BR',{month:'long',year:'numeric'}).r
 const uid=()=>crypto.randomUUID();
 let user=null, profile=null, page='dashboard', contaFilter='all', loanFilter='Ativos', calendarDate=new Date(), sidebarCollapsed=localStorage.getItem('financas-sidebar-collapsed')==='1';
 const state={contas:[],recorrentes:[],emprestimos:[],parcelas:[],categorias:[],assinaturas:[]};
+const ALICE_IMAGES={
+  paid:'assets/alice-paga.webp',
+  new:'assets/alice-nova-conta.webp'
+};
+function preloadAliceImages(){
+  Object.values(ALICE_IMAGES).forEach(src=>{
+    const img=new Image();
+    img.decoding='async';
+    img.fetchPriority='high';
+    img.src=src;
+  });
+}
+preloadAliceImages();
 const SERVICE_LOGOS={
  netflix:'https://cdn.simpleicons.org/netflix', amazonprime:'https://cdn.simpleicons.org/amazonprime', uber:'https://cdn.simpleicons.org/uber',
  youtube:'https://cdn.simpleicons.org/youtube', spotify:'https://cdn.simpleicons.org/spotify', disneyplus:'https://cdn.simpleicons.org/disneyplus',
@@ -26,7 +39,23 @@ const DEFAULT_CATEGORIES=[
 ];
 function icon(n,size=18){return `<i data-lucide="${n}" width="${size}" height="${size}"></i>`}
 function toast(t){const el=$('#toast');el.textContent=t;el.classList.add('show');clearTimeout(toast.t);toast.t=setTimeout(()=>el.classList.remove('show'),2600)}
-function showAlicePopup(kind){const root=$('#alicePopupRoot');if(!root)return;const paid=kind==='paid';root.innerHTML=`<div class="alice-popup alice-${paid?'paid':'new'}" role="status" aria-live="polite"><button class="alice-popup-close" type="button" aria-label="Fechar">×</button><img src="${paid?'assets/alice-paga.png':'assets/alice-nova-conta.png'}" alt="${paid?'Alice comemorando uma conta paga':'Alice preocupada com uma nova conta'}"><div class="alice-popup-copy"><strong>${paid?'Conta paga! 🎉':'Nova conta adicionada'}</strong><span>${paid?'Tudo em dia. Muito bem!':'Vamos organizar mais essa.'}</span></div></div>`;const popup=root.firstElementChild;requestAnimationFrame(()=>popup.classList.add('is-visible'));const close=()=>{popup.classList.remove('is-visible');setTimeout(()=>{if(root.firstElementChild===popup)root.innerHTML=''},260)};popup.querySelector('.alice-popup-close').onclick=close;clearTimeout(showAlicePopup.timer);showAlicePopup.timer=setTimeout(close,4200)}
+function showAlicePopup(kind){
+  const root=$('#alicePopupRoot');
+  if(!root)return;
+  const paid=kind==='paid';
+  const src=paid?ALICE_IMAGES.paid:ALICE_IMAGES.new;
+  root.innerHTML=`<div class="alice-popup alice-${paid?'paid':'new'}" role="status" aria-live="polite"><button class="alice-popup-close" type="button" aria-label="Fechar">×</button><img src="${src}" loading="eager" decoding="async" fetchpriority="high" alt="${paid?'Alice comemorando uma conta paga':'Alice preocupada com uma nova conta'}"><div class="alice-popup-copy"><strong>${paid?'Conta paga! 🎉':'Nova conta adicionada'}</strong><span>${paid?'Tudo em dia. Muito bem!':'Vamos organizar mais essa.'}</span></div></div>`;
+  const popup=root.firstElementChild;
+  const image=popup.querySelector('img');
+  const reveal=()=>requestAnimationFrame(()=>popup.classList.add('is-visible'));
+  if(image.complete)reveal();
+  else image.addEventListener('load',reveal,{once:true});
+  requestAnimationFrame(reveal);
+  const close=()=>{popup.classList.remove('is-visible');setTimeout(()=>{if(root.firstElementChild===popup)root.innerHTML=''},260)};
+  popup.querySelector('.alice-popup-close').onclick=close;
+  clearTimeout(showAlicePopup.timer);
+  showAlicePopup.timer=setTimeout(close,4200);
+}
 function refreshIcons(){if(window.lucide)lucide.createIcons()}
 function name(){return profile?.nome||user?.user_metadata?.name||user?.email?.split('@')[0]||'Usuário'}
 function avatarUrl(){return profile?.avatar_url||user?.user_metadata?.avatar_url||''}
