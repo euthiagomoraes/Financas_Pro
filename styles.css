@@ -142,4 +142,6 @@
 .family-switcher .icon-btn{border:0;background:transparent;padding:4px;cursor:pointer}
 @media(max-width:700px){.family-switcher select{max-width:125px}.family-switcher{padding:4px 5px}.top-actions{gap:5px}}
 
-.member-list{display:grid;gap:10px}.member-row{display:flex;align-items:center;gap:12px;padding:12px;border:1px solid var(--line,#e5e7eb);border-radius:14px;background:var(--card,#fff)}.member-row .avatar{display:grid;place-items:center;width:40px;height:40px;border-radius:50%;background:#e8f2ec;color:#176448;flex:0 0 40px}.member-row strong,.member-row small{display:block}.member-row small{margin-top:3px;color:var(--muted,#718078);font-size:12px}
+/* Correções: splash apenas no mobile e cadastro centralizado */
+.login-submit{display:flex;align-items:center;justify-content:center;margin-left:auto;margin-right:auto;}
+@media(min-width:761px){.splash-page{display:none!important;}}
