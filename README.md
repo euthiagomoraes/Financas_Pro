@@ -14,3 +14,7 @@ git add .
 git commit -m "Revisao 19 - popups animados da Alice"
 git push origin main
 ```
+
+
+## Entrada após login
+Foi adicionada uma splash screen da Alice, sem botões de preview. Ela aparece por aproximadamente 2,8 segundos e direciona automaticamente ao painel.
