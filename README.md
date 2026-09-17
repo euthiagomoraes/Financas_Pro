@@ -1,19 +1,14 @@
-# Finanças Pro — Revisão 9
+# Finanças Pro — Revisão 19
 
-Aplicação financeira mobile-first com Supabase Auth/Database.
+## CRUD completo de Contas e Empréstimos
 
-## Ajustes desta revisão
-- Categorias padrão separadas por tipo interno: `DESPESA` e `RECEITA`, criadas automaticamente por usuário sem duplicação.
-- Tela **Contas** mostra o previsto do mês em uma única lista, incluindo contas cadastradas, assinaturas ativas e parcelas de empréstimos.
-- Status das contas reais é clicável: conta paga pode voltar para pendente; conta não paga aparece como **Vence hoje** quando o vencimento é hoje e **Pendente** nos demais dias.
-- Clique em um empréstimo abre a relação completa de parcelas.
-- Campos de formulário mobile usam fonte mínima de 16px e viewport sem zoom automático para evitar ampliação ao tocar nos inputs.
-- Mantido Supabase como fonte dos dados, sem registros fictícios.
+- Contas: editar, excluir e alternar Pago/Pendente por ID único do Supabase.
+- Empréstimos: editar dados, excluir com remoção das parcelas vinculadas e ajustar status das parcelas individualmente.
+- Parcelas: atualização por ID, criação de parcelas adicionais e remoção das excedentes ao editar a quantidade.
+- Todas as operações recarregam os dados do Supabase e atualizam as telas, abas e totais.
+- Não usar posição do item na lista como identificador.
 
+## Validação
 
-## Revisão 18
-- Corrige gravação de contas com fallback para bancos sem o campo `recorrente`.
-- Adiciona migração do campo `contas.recorrente`.
-- Clique delegado permite editar qualquer registro da tabela.
-- Tabela de Contas vira cartões no mobile, sem rolagem horizontal.
-- Checkbox de recorrência foi redimensionado para mobile.
+- `node --check app.js` executado com sucesso.
+- Testar no Supabase com pelo menos 3 contas e 3 empréstimos, incluindo edição/exclusão de itens que não sejam o último registro.
