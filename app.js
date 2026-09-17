@@ -13,19 +13,6 @@ const monthName=d=>d.toLocaleDateString('pt-BR',{month:'long',year:'numeric'}).r
 const uid=()=>crypto.randomUUID();
 let user=null, profile=null, page='dashboard', contaFilter='all', loanFilter='Ativos', calendarDate=new Date(), sidebarCollapsed=localStorage.getItem('financas-sidebar-collapsed')==='1';
 const state={contas:[],recorrentes:[],emprestimos:[],parcelas:[],categorias:[],assinaturas:[]};
-const ALICE_IMAGES={
-  paid:'assets/alice-paga.webp',
-  new:'assets/alice-nova-conta.webp'
-};
-function preloadAliceImages(){
-  Object.values(ALICE_IMAGES).forEach(src=>{
-    const img=new Image();
-    img.decoding='async';
-    img.fetchPriority='high';
-    img.src=src;
-  });
-}
-preloadAliceImages();
 const SERVICE_LOGOS={
  netflix:'https://cdn.simpleicons.org/netflix', amazonprime:'https://cdn.simpleicons.org/amazonprime', uber:'https://cdn.simpleicons.org/uber',
  youtube:'https://cdn.simpleicons.org/youtube', spotify:'https://cdn.simpleicons.org/spotify', disneyplus:'https://cdn.simpleicons.org/disneyplus',
@@ -39,23 +26,7 @@ const DEFAULT_CATEGORIES=[
 ];
 function icon(n,size=18){return `<i data-lucide="${n}" width="${size}" height="${size}"></i>`}
 function toast(t){const el=$('#toast');el.textContent=t;el.classList.add('show');clearTimeout(toast.t);toast.t=setTimeout(()=>el.classList.remove('show'),2600)}
-function showAlicePopup(kind){
-  const root=$('#alicePopupRoot');
-  if(!root)return;
-  const paid=kind==='paid';
-  const src=paid?ALICE_IMAGES.paid:ALICE_IMAGES.new;
-  root.innerHTML=`<div class="alice-popup alice-${paid?'paid':'new'}" role="status" aria-live="polite"><button class="alice-popup-close" type="button" aria-label="Fechar">×</button><img src="${src}" loading="eager" decoding="async" fetchpriority="high" alt="${paid?'Alice comemorando uma conta paga':'Alice preocupada com uma nova conta'}"><div class="alice-popup-copy"><strong>${paid?'Conta paga! 🎉':'Nova conta adicionada'}</strong><span>${paid?'Tudo em dia. Muito bem!':'Vamos organizar mais essa.'}</span></div></div>`;
-  const popup=root.firstElementChild;
-  const image=popup.querySelector('img');
-  const reveal=()=>requestAnimationFrame(()=>popup.classList.add('is-visible'));
-  if(image.complete)reveal();
-  else image.addEventListener('load',reveal,{once:true});
-  requestAnimationFrame(reveal);
-  const close=()=>{popup.classList.remove('is-visible');setTimeout(()=>{if(root.firstElementChild===popup)root.innerHTML=''},260)};
-  popup.querySelector('.alice-popup-close').onclick=close;
-  clearTimeout(showAlicePopup.timer);
-  showAlicePopup.timer=setTimeout(close,4200);
-}
+function showAlicePopup(kind){const root=$('#alicePopupRoot');if(!root)return;const paid=kind==='paid';root.innerHTML=`<div class="alice-popup alice-${paid?'paid':'new'}" role="status" aria-live="polite"><button class="alice-popup-close" type="button" aria-label="Fechar">×</button><img src="${paid?'assets/alice-paga.png':'assets/alice-nova-conta.png'}" alt="${paid?'Alice comemorando uma conta paga':'Alice preocupada com uma nova conta'}"><div class="alice-popup-copy"><strong>${paid?'Conta paga! 🎉':'Nova conta adicionada'}</strong><span>${paid?'Tudo em dia. Muito bem!':'Vamos organizar mais essa.'}</span></div></div>`;const popup=root.firstElementChild;requestAnimationFrame(()=>popup.classList.add('is-visible'));const close=()=>{popup.classList.remove('is-visible');setTimeout(()=>{if(root.firstElementChild===popup)root.innerHTML=''},260)};popup.querySelector('.alice-popup-close').onclick=close;clearTimeout(showAlicePopup.timer);showAlicePopup.timer=setTimeout(close,4200)}
 function refreshIcons(){if(window.lucide)lucide.createIcons()}
 function name(){return profile?.nome||user?.user_metadata?.name||user?.email?.split('@')[0]||'Usuário'}
 function avatarUrl(){return profile?.avatar_url||user?.user_metadata?.avatar_url||''}
@@ -187,5 +158,14 @@ async function seedDefaultCategories(){
 async function loadData(){const [c,l,p,sub]=await Promise.all([sb.from('contas').select('*').eq('usuario_id',user.id).order('data_vencimento'),sb.from('emprestimos').select('*').eq('usuario_id',user.id).order('criado_em',{ascending:false}),sb.from('emprestimo_parcelas').select('*').eq('usuario_id',user.id).order('data_vencimento'),sb.from('assinaturas').select('*').eq('usuario_id',user.id).order('dia_vencimento')]);state.contas=(c.data||[]).map(x=>({...x,vencimento:x.data_vencimento}));state.emprestimos=(l.data||[]).map(x=>({...x,total:Number(x.valor_total),valorContratado:Number(x.valor_contratado),parcelas:Number(x.quantidade_parcelas),valorParcela:Number(x.valor_parcela),primeira:x.primeiro_vencimento}));state.parcelas=p.data||[];state.assinaturas=sub.data||[];const errs=[c,l,p,sub].filter(x=>x.error);if(errs.length)console.warn('Supabase:',errs.map(x=>x.error.message))}
 
 function renderLogin(errorMsg=''){const app=document.querySelector('#app');app.innerHTML=`<div class="login-page"><div class="login-glow login-glow-a"></div><div class="login-glow login-glow-b"></div><div class="login-card"><div class="login-brand"><div class="brand-mark">${icon('trending-up',25)}</div><div><strong>Finanças <span>Pro</span></strong><small>Seu dinheiro no controle</small></div></div><div class="login-heading"><span class="eyebrow">Acesso seguro</span><h1>Bem-vindo de volta</h1><p>Entre para acompanhar suas contas, empréstimos e assinaturas.</p></div><form id="loginForm" class="login-form"><div class="field"><label for="loginEmail">E-mail</label><div class="input-icon">${icon('mail',18)}<input id="loginEmail" name="email" type="email" autocomplete="email" placeholder="seu@email.com" required></div></div><div class="field"><label for="loginPassword">Senha</label><div class="input-icon">${icon('lock-keyhole',18)}<input id="loginPassword" name="password" type="password" autocomplete="current-password" placeholder="Digite sua senha" required><button type="button" class="password-toggle" id="togglePassword" aria-label="Mostrar senha">${icon('eye',18)}</button></div></div><div id="loginError" class="login-error" ${errorMsg?'':'hidden'}>${esc(errorMsg)}</div><button class="btn btn-primary login-submit" type="submit" id="loginSubmit">${icon('log-in',18)} Entrar</button></form><div class="login-footer">Seus dados ficam protegidos pela autenticação do Supabase.</div></div></div>`;refreshIcons();const form=$('#loginForm'),email=$('#loginEmail'),password=$('#loginPassword'),error=$('#loginError'),submit=$('#loginSubmit');$('#togglePassword')?.addEventListener('click',()=>{const show=password.type==='password';password.type=show?'text':'password';$('#togglePassword').innerHTML=icon(show?'eye-off':'eye',18);refreshIcons()});form?.addEventListener('submit',async e=>{e.preventDefault();error.hidden=true;error.textContent='';submit.disabled=true;submit.innerHTML=`${icon('loader-circle',18)} Entrando...`;refreshIcons();const {error:q}=await sb.auth.signInWithPassword({email:email.value.trim(),password:password.value});if(q){error.textContent=q.message.includes('Invalid login credentials')?'E-mail ou senha incorretos.':q.message;error.hidden=false;submit.disabled=false;submit.innerHTML=`${icon('log-in',18)} Entrar`;refreshIcons();return}submit.innerHTML=`${icon('check',18)} Acesso autorizado`;refreshIcons()})}
-async function boot(){const {data}=await sb.auth.getSession();user=data.session?.user||null;sb.auth.onAuthStateChange((event,session)=>{if(event==='SIGNED_OUT'){user=null;profile=null;renderLogin()}else if(event==='SIGNED_IN'&&session?.user){user=session.user;setTimeout(async()=>{await loadProfile();await loadData();render()},0)}});if(!user){renderLogin();return}await loadProfile();await loadData();render()}
+function renderPreview(){
+ const app=document.querySelector('#app');
+ app.innerHTML=`<section class="preview-page" aria-label="Preparando seu painel"><div class="preview-glow preview-glow-a"></div><div class="preview-glow preview-glow-b"></div><div class="preview-card"><div class="preview-brand"><span class="preview-brand-mark">✦</span><div><strong>Alice <span>Finanças Pro</span></strong><small>Seu dinheiro no controle</small></div></div><div class="preview-art"><img src="assets/alice-preview.png" alt="Alice, mascote do Finanças Pro" /></div><div class="preview-copy"><span class="eyebrow">Tudo pronto para você</span><h1>Vamos cuidar das suas finanças?</h1><p>Alice está preparando seu painel para você acompanhar contas, empréstimos e assinaturas com tranquilidade.</p></div><div class="preview-progress"><span></span></div><button class="btn btn-primary preview-enter" id="previewEnter">Entrar no meu painel <span aria-hidden="true">→</span></button><button class="preview-skip" id="previewSkip">Continuar automaticamente</button></div></section>`;
+ const enter=()=>{if(enter.done)return;enter.done=true;clearTimeout(timer);render()};
+ const timer=setTimeout(enter,4200);
+ $('#previewEnter')?.addEventListener('click',enter);
+ $('#previewSkip')?.addEventListener('click',enter);
+}
+async function openApp(){await loadProfile();await loadData();renderPreview()}
+async function boot(){const {data}=await sb.auth.getSession();user=data.session?.user||null;sb.auth.onAuthStateChange((event,session)=>{if(event==='SIGNED_OUT'){user=null;profile=null;renderLogin()}else if(event==='SIGNED_IN'&&session?.user){user=session.user;setTimeout(async()=>{await openApp()},0)}});if(!user){renderLogin();return}await openApp()}
 boot();
