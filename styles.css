@@ -130,3 +130,6 @@
 .splash-loader{position:absolute;bottom:calc(28px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);width:calc(100% - 72px);max-width:320px;background:rgba(255,255,255,.6)}
 .splash-orb{display:none}
 @media(min-width:521px){.splash-content{max-width:none}.splash-brand{width:min(520px,calc(100% - 64px))}.splash-message{width:min(420px,calc(100% - 64px))}}
+
+/* Splash: sem textos sobre a imagem */
+.splash-brand,.splash-message{display:none!important}
