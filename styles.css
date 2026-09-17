@@ -136,3 +136,8 @@
 
 /* Splash Screen: imagem limpa, sem textos sobrepostos */
 .splash-brand,.splash-message{display:none!important;}
+
+.family-switcher{display:flex;align-items:center;gap:6px;padding:5px 8px;border:1px solid var(--line,#e5e7eb);border-radius:12px;background:var(--card,#fff)}
+.family-switcher select{max-width:180px;border:0;background:transparent;font:inherit;color:inherit;outline:none}
+.family-switcher .icon-btn{border:0;background:transparent;padding:4px;cursor:pointer}
+@media(max-width:700px){.family-switcher select{max-width:125px}.family-switcher{padding:4px 5px}.top-actions{gap:5px}}

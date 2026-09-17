@@ -144,3 +144,111 @@ create policy "avatars_own_delete" on storage.objects for delete using (bucket_i
 -- Revisão 18 — campo usado pelo checkbox Conta recorrente.
 alter table public.contas add column if not exists recorrente boolean not null default false;
 create index if not exists idx_contas_usuario_recorrente on public.contas(usuario_id,recorrente);
+
+-- ============================================================
+-- FINANÇAS PRO — MULTIFAMÍLIAS E MEMBROS (migração segura)
+-- Execute após o SQL anterior. Não apaga registros existentes.
+-- ============================================================
+create table if not exists public.familias (
+  id uuid primary key default gen_random_uuid(),
+  nome text not null,
+  criado_por uuid not null references auth.users(id) on delete cascade,
+  criado_em timestamptz not null default now()
+);
+create table if not exists public.familia_membros (
+  id uuid primary key default gen_random_uuid(),
+  familia_id uuid not null references public.familias(id) on delete cascade,
+  usuario_id uuid not null references auth.users(id) on delete cascade,
+  papel text not null default 'membro' check (papel in ('admin','membro')),
+  criado_em timestamptz not null default now(),
+  unique(familia_id, usuario_id)
+);
+
+alter table public.contas add column if not exists familia_id uuid references public.familias(id) on delete cascade;
+alter table public.contas_recorrentes add column if not exists familia_id uuid references public.familias(id) on delete cascade;
+alter table public.categorias add column if not exists familia_id uuid references public.familias(id) on delete cascade;
+alter table public.emprestimos add column if not exists familia_id uuid references public.familias(id) on delete cascade;
+alter table public.emprestimo_parcelas add column if not exists familia_id uuid references public.familias(id) on delete cascade;
+alter table public.assinaturas add column if not exists familia_id uuid references public.familias(id) on delete cascade;
+
+-- Cria uma família inicial por usuário e associa dados legados a ela.
+do $$
+declare u record; f uuid;
+begin
+  for u in select id from auth.users loop
+    select id into f from public.familias where criado_por=u.id order by criado_em limit 1;
+    if f is null then
+      insert into public.familias(nome, criado_por) values ('Minha família',u.id) returning id into f;
+    end if;
+    insert into public.familia_membros(familia_id,usuario_id,papel)
+      values(f,u.id,'admin') on conflict (familia_id,usuario_id) do nothing;
+    update public.contas set familia_id=f where usuario_id=u.id and familia_id is null;
+    update public.contas_recorrentes set familia_id=f where usuario_id=u.id and familia_id is null;
+    update public.categorias set familia_id=f where usuario_id=u.id and familia_id is null;
+    update public.emprestimos set familia_id=f where usuario_id=u.id and familia_id is null;
+    update public.emprestimo_parcelas set familia_id=f where usuario_id=u.id and familia_id is null;
+    update public.assinaturas set familia_id=f where usuario_id=u.id and familia_id is null;
+  end loop;
+end $$;
+
+create index if not exists idx_familia_membros_usuario on public.familia_membros(usuario_id);
+create index if not exists idx_familia_membros_familia on public.familia_membros(familia_id);
+create index if not exists idx_contas_familia on public.contas(familia_id);
+create index if not exists idx_emprestimos_familia on public.emprestimos(familia_id);
+create index if not exists idx_assinaturas_familia on public.assinaturas(familia_id);
+
+alter table public.familias enable row level security;
+alter table public.familia_membros enable row level security;
+create or replace function public.is_family_member(target_family uuid)
+returns boolean language sql security definer stable set search_path=public
+as $$ select exists(select 1 from public.familia_membros where familia_id=target_family and usuario_id=auth.uid()); $$;
+
+drop policy if exists familias_select_member on public.familias;
+drop policy if exists familias_insert_owner on public.familias;
+drop policy if exists familias_update_admin on public.familias;
+create policy familias_select_member on public.familias for select using (public.is_family_member(id));
+create policy familias_insert_owner on public.familias for insert with check (criado_por=auth.uid());
+create policy familias_update_admin on public.familias for update using (exists(select 1 from public.familia_membros m where m.familia_id=id and m.usuario_id=auth.uid() and m.papel='admin'));
+
+drop policy if exists familia_membros_select_member on public.familia_membros;
+drop policy if exists familia_membros_insert_admin on public.familia_membros;
+create policy familia_membros_select_member on public.familia_membros for select using (public.is_family_member(familia_id));
+create policy familia_membros_insert_admin on public.familia_membros for insert with check (public.is_family_member(familia_id));
+
+-- Substitui políticas próprias por políticas baseadas na família.
+DO $$
+DECLARE t text; p text;
+BEGIN
+  FOREACH t IN ARRAY ARRAY['contas','contas_recorrentes','categorias','emprestimos','emprestimo_parcelas','assinaturas'] LOOP
+    EXECUTE format('drop policy if exists financas_%s_select_own on public.%I',t,t);
+    EXECUTE format('drop policy if exists financas_%s_insert_own on public.%I',t,t);
+    EXECUTE format('drop policy if exists financas_%s_update_own on public.%I',t,t);
+    EXECUTE format('drop policy if exists financas_%s_delete_own on public.%I',t,t);
+    EXECUTE format('create policy financas_%s_family_select on public.%I for select using (public.is_family_member(familia_id))',t,t);
+    EXECUTE format('create policy financas_%s_family_insert on public.%I for insert with check (public.is_family_member(familia_id) and usuario_id=auth.uid())',t,t);
+    EXECUTE format('create policy financas_%s_family_update on public.%I for update using (public.is_family_member(familia_id)) with check (public.is_family_member(familia_id))',t,t);
+    EXECUTE format('create policy financas_%s_family_delete on public.%I for delete using (public.is_family_member(familia_id))',t,t);
+  END LOOP;
+END $$;
+
+-- Remove políticas legadas com nomes diferentes, para não bloquear membros da família.
+drop policy if exists assinaturas_select_own on public.assinaturas;
+drop policy if exists assinaturas_insert_own on public.assinaturas;
+drop policy if exists assinaturas_update_own on public.assinaturas;
+drop policy if exists assinaturas_delete_own on public.assinaturas;
+drop policy if exists financas_loan_select_own on public.emprestimos;
+drop policy if exists financas_loan_insert_own on public.emprestimos;
+drop policy if exists financas_loan_update_own on public.emprestimos;
+drop policy if exists financas_loan_delete_own on public.emprestimos;
+drop policy if exists financas_parcela_select_own on public.emprestimo_parcelas;
+drop policy if exists financas_parcela_insert_own on public.emprestimo_parcelas;
+drop policy if exists financas_parcela_update_own on public.emprestimo_parcelas;
+drop policy if exists financas_parcela_delete_own on public.emprestimo_parcelas;
+
+-- Permite que o criador se inclua como primeiro administrador da própria família.
+drop policy if exists familia_membros_insert_admin on public.familia_membros;
+create policy familia_membros_insert_admin on public.familia_membros
+for insert with check (
+  exists(select 1 from public.familias f where f.id=familia_id and f.criado_por=auth.uid())
+  or public.is_family_member(familia_id)
+);
