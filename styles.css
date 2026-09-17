@@ -133,3 +133,6 @@
 
 /* Splash: sem textos sobre a imagem */
 .splash-brand,.splash-message{display:none!important}
+
+/* Splash Screen: imagem limpa, sem textos sobrepostos */
+.splash-brand,.splash-message{display:none!important;}
