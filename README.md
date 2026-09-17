@@ -1,17 +1,26 @@
-# Finanças Pro — Revisão 19 (correção CRUD)
+# Finanças Pro — Revisão 19 corrigida
 
-## CRUD de Contas e Empréstimos
+## Ajustes desta revisão
+- O clique no cartão de empréstimo abre primeiro a tela de detalhes com as parcelas.
+- A ação no cartão foi alterada de **Excluir** para **Editar**.
+- A edição completa do empréstimo fica disponível pelo botão **Editar empréstimo** dentro dos detalhes.
+- A exclusão permanece dentro da tela de edição, com confirmação.
+- As parcelas continuam podendo alternar entre **Pago** e **Pendente**.
+- A alteração de status tenta os formatos `pago/pendente` e `Pago/Pendente` para compatibilidade com a restrição existente no Supabase.
+- O botão de status das parcelas é vinculado também dentro dos modais.
 
-- Contas: editar, excluir e alternar Pago/Pendente por ID único do Supabase.
-- Ao mudar uma conta de Pendente para Pago, ela passa a pertencer à aba **Pagas** e deixa de aparecer em **Pendentes** após a atualização dos dados.
-- A aba **Pagas** não exibe a ação de lançar nova conta.
-- O botão de lançamento foi removido do estado vazio das abas, evitando criar uma conta paga por engano.
-- Empréstimos: editar dados, excluir com remoção das parcelas vinculadas e ajustar o status de parcelas individualmente.
-- Parcelas: atualização por ID, criação de parcelas adicionais e remoção das excedentes ao editar a quantidade.
-- Todas as operações recarregam os dados do Supabase e atualizam as telas, abas e totais.
-- Não usar posição do item na lista como identificador.
+## Publicação
+1. Substitua os arquivos do projeto local.
+2. Teste no navegador:
+   - abrir um empréstimo e visualizar parcelas;
+   - clicar em Editar;
+   - alterar dados e salvar;
+   - alterar o status de várias parcelas, incluindo parcelas que não sejam a última;
+   - excluir um empréstimo somente pela tela de edição.
+3. Execute os comandos Git:
 
-## Validação local
-
-- `node --check app.js` executado com sucesso usando Node.js 22.
-- Teste recomendado no Supabase: pelo menos 3 contas e 3 empréstimos, incluindo edição, status e exclusão de itens que não sejam o último registro.
+```powershell
+git add .
+git commit -m "Revisao 19 - detalhes e status das parcelas"
+git push origin main
+```
