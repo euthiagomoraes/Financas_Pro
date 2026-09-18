@@ -117,9 +117,30 @@ async function openFamilyMemberForm(){
  if(!isAdmin())return toast('Somente administradores podem inserir membros.');
  modal('Inserir novo membro',`<form id="memberForm" class="form-grid"><div class="field"><label>Nome</label><input name="nome" required></div><div class="field"><label>Sobrenome</label><input name="sobrenome" required></div><div class="field full"><label>E-mail</label><input name="email" type="email" required></div><div class="field"><label>Senha provisória</label><input name="senha" type="password" minlength=6 required></div><div class="field"><label>Tipo</label><select name="tipo" required><option value="Marido">Marido</option><option value="Esposa">Esposa</option><option value="Namorado">Namorado</option><option value="Namorada">Namorada</option><option value="Solteiro">Solteiro</option></select></div><div class="form-actions"><button type="button" class="btn btn-outline" id="cancelForm">Cancelar</button><button class="btn btn-primary">Cadastrar membro</button></div></form>`);
  $('#cancelForm').onclick=closeModal;
- $('#memberForm').onsubmit=async e=>{e.preventDefault();const f=new FormData(e.currentTarget);const primeiroNome=String(f.get('nome')||'').trim();const sobrenome=String(f.get('sobrenome')||'').trim();const email=String(f.get('email')||'').trim().toLowerCase();const tipo=String(f.get('tipo')||'').trim();const senha=String(f.get('senha')||'');const {data:created,error:createError}=await sb.functions.invoke('create-family-member',{body:{email,nome:primeiroNome,sobrenome,senha,tipo,familia_id:activeFamily.id}});if(createError)return toast(createError.message||'Não foi possível cadastrar o membro.');if(created?.error)return toast(created.error);closeModal();toast('Membro cadastrado com acesso à família.');await loadFamilies();await renderFamilyMembers();};
+ $('#memberForm').onsubmit=async e=>{e.preventDefault();const f=new FormData(e.currentTarget);const email=String(f.get('email')).trim().toLowerCase();const nome=`${String(f.get('nome')).trim()} ${String(f.get('sobrenome')).trim()}`;const tipo=String(f.get('tipo'));const senha=String(f.get('senha')||'');const {data:created,error:createError}=await sb.functions.invoke('create-family-member',{body:{email,nome,senha,tipo,familia_id:activeFamily.id}});if(createError)return toast(createError.message||'Não foi possível cadastrar o membro.');if(created?.error)return toast(created.error);closeModal();toast('Membro cadastrado com acesso à família.');await loadFamilies();await renderFamilyMembers();};
 }
-async function renderFamilyMembers(){const root=$('#familyMembersList');if(!root||!activeFamily)return;const q=await sb.from('familia_membros').select('usuario_id,papel,tipo,profiles(nome,email)').eq('familia_id',activeFamily.id);if(q.error){root.innerHTML=`<p class="muted">${esc(q.error.message)}</p>`;return}root.innerHTML=(q.data||[]).map(m=>`<div class="up-item"><div class="date-box">${icon('user',16)}</div><div class="up-copy"><strong>${esc(m.profiles?.nome||'Membro')}</strong><small>${esc(m.profiles?.email||'')} • ${esc(m.tipo||m.papel||'membro')}</small></div><span class="status ${m.papel==='admin'?'active':'soft'}">${m.papel==='admin'?'Admin':'Membro'}</span></div>`).join('')||'<div class="empty">Nenhum membro cadastrado.</div>';refreshIcons();}
+async function renderFamilyMembers(){
+ const root=$('#familyMembersList');
+ if(!root||!activeFamily)return;
+ const q=await sb.from('familia_membros').select('usuario_id,papel,tipo').eq('familia_id',activeFamily.id);
+ if(q.error){root.innerHTML=`<p class="muted">${esc(q.error.message)}</p>`;return;}
+ const members=q.data||[];
+ const ids=[...new Set(members.map(m=>m.usuario_id).filter(Boolean))];
+ let profiles=[];
+ if(ids.length){
+   let p=await sb.from('profiles').select('id,nome,email').in('id',ids);
+   if(p.error){
+     p=await sb.from('perfis').select('id,nome,email').in('id',ids);
+   }
+   profiles=p.data||[];
+ }
+ const byId=new Map(profiles.map(p=>[p.id,p]));
+ root.innerHTML=members.map(m=>{
+   const profile=byId.get(m.usuario_id)||{};
+   return `<div class="up-item"><div class="date-box">${icon('user',16)}</div><div class="up-copy"><strong>${esc(profile.nome||'Membro')}</strong><small>${esc(profile.email||'')} • ${esc(m.tipo||m.papel||'membro')}</small></div><span class="status ${m.papel==='admin'?'active':'soft'}">${m.papel==='admin'?'Admin':'Membro'}</span></div>`;
+ }).join('')||'<div class="empty">Nenhum membro cadastrado.</div>';
+ refreshIcons();
+}
 
 function perfilPage(){return `<div class="toolbar"><div><div class="eyebrow">Minha conta</div><h1>Perfil</h1><p class="muted">Atualize seus dados e sua foto de perfil.</p></div></div><div class="profile-grid"><section class="card profile-card"><div class="profile-big">${avatarUrl()?`<img src="${esc(avatarUrl())}" alt="Foto do perfil">`:icon('user',42)}</div><h2 style="font:800 18px Manrope;margin:0">${esc(name())}</h2><p class="muted">${esc(user?.email||profile?.email||'')}</p><label class="btn btn-soft" style="margin-top:10px">${icon('camera',16)} Alterar foto<input type="file" id="avatarInput" accept="image/*" hidden></label><p class="muted" style="margin-top:12px">A imagem será armazenada no Supabase Storage.</p></section><section class="card profile-form"><form id="profileForm" class="form-grid"><div class="field"><label>Nome</label><input name="nome" value="${esc(profile?.nome||name())}" required></div><div class="field"><label>E-mail</label><input value="${esc(user?.email||profile?.email||'')}" disabled></div><div class="form-actions"><button class="btn btn-primary">Salvar perfil</button></div></form></section></div>`}
 function modal(title,body){$('#modalRoot').innerHTML=`<div class="overlay" id="overlay"><div class="modal"><div class="modal-head"><h2>${title}</h2><button class="close" id="closeModal">${icon('x',18)}</button></div>${body}</div></div>`;refreshIcons();$('#closeModal').onclick=closeModal;$('#overlay').addEventListener('click',e=>{if(e.target.id==='overlay')closeModal()})}
