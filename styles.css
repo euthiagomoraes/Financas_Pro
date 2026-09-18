@@ -145,4 +145,8 @@
 /* Correções: splash apenas no mobile e cadastro centralizado */
 .login-submit{display:flex;align-items:center;justify-content:center;margin-left:auto;margin-right:auto;}
 @media(min-width:761px){.splash-page{display:none!important;}}
-.member-avatar{width:42px;height:42px;min-width:42px;padding:0;display:grid;place-items:center;overflow:hidden;border-radius:12px}.member-avatar img{width:100%;height:100%;object-fit:cover;display:block}.member-avatar svg{width:18px;height:18px}
+
+/* Refinamentos de navegação e ações do perfil */
+.profile-actions{display:flex;justify-content:space-between;align-items:center;gap:16px;width:100%;}
+.profile-actions .btn{white-space:nowrap;}
+@media(max-width:520px){.profile-actions{gap:10px;flex-wrap:wrap;}.profile-actions .btn{flex:1;justify-content:center;}}
