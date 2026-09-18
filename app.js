@@ -124,7 +124,17 @@ async function renderFamilyMembers(){
  const q=await sb.from('familia_membros').select('usuario_id,papel,tipo').eq('familia_id',activeFamily.id);
  if(q.error){root.innerHTML=`<p class="muted">${esc(q.error.message)}</p>`;return}
  const ids=[...new Set((q.data||[]).map(x=>x.usuario_id))];let profiles=[];
- if(ids.length){const pr=await sb.from('profiles').select('id,nome,email').in('id',ids);profiles=pr.data||[];if(!profiles.length){const legacy=await sb.from('perfis').select('id,nome,email').in('id',ids);profiles=legacy.data||[];}}
+ if(ids.length){
+  const [modern,legacy]=await Promise.all([
+   sb.from('profiles').select('id,nome,email').in('id',ids),
+   sb.from('perfis').select('id,nome,email').in('id',ids)
+  ]);
+  const merged=[...(modern.data||[]),...(legacy.data||[])];
+  const unique=new Map();
+  merged.forEach(x=>{if(x?.id&&!unique.has(x.id))unique.set(x.id,x);});
+  profiles=[...unique.values()];
+  if(modern.error&&legacy.error)console.warn('Perfis da família:',modern.error.message,legacy.error.message);
+ }
  const byId=Object.fromEntries(profiles.map(x=>[x.id,x]));
  root.innerHTML=(q.data||[]).map(m=>{const pr=byId[m.usuario_id]||{};const admin=String(m.papel||'').toLowerCase()==='admin';const relationship=m.tipo||(admin?'Esposa':'');const roleLabel=admin?'Adm':'Membro';const canRemove=isAdmin()&&m.usuario_id!==user.id;return `<div class="up-item"><div class="date-box">${icon('user',16)}</div><div class="up-copy"><strong>${esc(pr.nome||'Nome não informado')}</strong><small>${esc(relationship)}</small></div><span class="status soft">${roleLabel}</span>${canRemove?`<button class="btn btn-danger btn-icon" title="Remover membro" data-remove-member="${m.usuario_id}">${icon('trash-2',15)}</button>`:''}</div>`}).join('')||'<div class="empty">Nenhum membro cadastrado.</div>';refreshIcons();
  document.querySelectorAll('[data-remove-member]').forEach(b=>b.onclick=()=>removeFamilyMember(b.dataset.removeMember));
