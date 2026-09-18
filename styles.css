@@ -145,8 +145,3 @@
 /* Correções: splash apenas no mobile e cadastro centralizado */
 .login-submit{display:flex;align-items:center;justify-content:center;margin-left:auto;margin-right:auto;}
 @media(min-width:761px){.splash-page{display:none!important;}}
-
-/* Design system — confirmações e modais */
-.modal{border:1px solid rgba(18,73,57,.10);background:linear-gradient(180deg,#fffefb 0%,var(--paper) 100%);box-shadow:0 28px 90px rgba(7,45,35,.24)}
-.modal-head{padding-bottom:14px;border-bottom:1px solid #edf1ed}.modal-head h2{color:#123f34;letter-spacing:-.02em}.close{display:grid;place-items:center;border:1px solid #e1e9e3;color:#527066;cursor:pointer;transition:.2s}.close:hover{background:#e6f2eb;color:var(--forest)}
-.confirm-modal{max-width:460px}.confirm-body{display:flex;align-items:flex-start;gap:13px;padding:18px 0 8px}.confirm-body p{margin:2px 0 0;color:#63756d;font-size:13px;line-height:1.55}.confirm-icon{width:44px;height:44px;flex:0 0 44px;border-radius:15px;display:grid;place-items:center}.confirm-icon.danger{background:#fff0ef;color:#c94d50;border:1px solid #f5d4d1}.confirm-icon.info{background:#edf6f1;color:#0d8a67;border:1px solid #d5e9dd}.confirm-actions{margin-top:14px;padding-top:14px;border-top:1px solid #edf1ed}.btn-danger{background:#c84f56;color:#fff;border:1px solid #c84f56}.btn-danger:hover{background:#ad3e45;border-color:#ad3e45}.confirm-actions .btn{min-width:105px}
