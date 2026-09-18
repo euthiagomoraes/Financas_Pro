@@ -126,8 +126,8 @@ async function renderFamilyMembers(){
  const ids=[...new Set((q.data||[]).map(x=>x.usuario_id))];let profiles=[];
  if(ids.length){
   const [modern,legacy]=await Promise.all([
-   sb.from('profiles').select('id,nome,email').in('id',ids),
-   sb.from('perfis').select('id,nome,email').in('id',ids)
+   sb.from('profiles').select('id,nome,email,avatar_url').in('id',ids),
+   sb.from('perfis').select('id,nome,email,avatar_url').in('id',ids)
   ]);
   const merged=[...(modern.data||[]),...(legacy.data||[])];
   const unique=new Map();
@@ -136,7 +136,7 @@ async function renderFamilyMembers(){
   if(modern.error&&legacy.error)console.warn('Perfis da família:',modern.error.message,legacy.error.message);
  }
  const byId=Object.fromEntries(profiles.map(x=>[x.id,x]));
- root.innerHTML=(q.data||[]).map(m=>{const pr=byId[m.usuario_id]||{};const admin=String(m.papel||'').toLowerCase()==='admin';const relationship=m.tipo||(admin?'Esposa':'');const roleLabel=admin?'Adm':'Membro';const canRemove=isAdmin()&&m.usuario_id!==user.id;return `<div class="up-item"><div class="date-box">${icon('user',16)}</div><div class="up-copy"><strong>${esc(pr.nome||'Nome não informado')}</strong><small>${esc(relationship)}</small></div><span class="status soft">${roleLabel}</span>${canRemove?`<button class="btn btn-danger btn-icon" title="Remover membro" data-remove-member="${m.usuario_id}">${icon('trash-2',15)}</button>`:''}</div>`}).join('')||'<div class="empty">Nenhum membro cadastrado.</div>';refreshIcons();
+ root.innerHTML=(q.data||[]).map(m=>{const pr=byId[m.usuario_id]||{};const admin=String(m.papel||'').toLowerCase()==='admin';const relationship=m.tipo||(admin?'Esposa':'');const roleLabel=admin?'Adm':'Membro';const canRemove=isAdmin()&&m.usuario_id!==user.id;const photo=pr.avatar_url?`<img src="${esc(pr.avatar_url)}" alt="Foto de ${esc(pr.nome||'perfil')}" loading="lazy">`:icon('user',18);return `<div class="up-item"><div class="date-box member-avatar">${photo}</div><div class="up-copy"><strong>${esc(pr.nome||'Nome não informado')}</strong><small>${esc(relationship)}</small></div><span class="status soft">${roleLabel}</span>${canRemove?`<button class="btn btn-danger btn-icon" title="Remover membro" data-remove-member="${m.usuario_id}">${icon('trash-2',15)}</button>`:''}</div>`}).join('')||'<div class="empty">Nenhum membro cadastrado.</div>';refreshIcons();
  document.querySelectorAll('[data-remove-member]').forEach(b=>b.onclick=()=>removeFamilyMember(b.dataset.removeMember));
 }
 
