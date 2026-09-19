@@ -163,3 +163,7 @@
 .notification-item:hover,.notification-item.unread{background:#f0f7f1}.notification-dot{width:30px;height:30px;flex:0 0 30px;border-radius:10px;background:#e6f1e9;color:var(--forest,#17664b);display:grid;place-items:center}
 .notification-item>span:last-child{display:grid;gap:3px;min-width:0}.notification-item strong{font-size:11px}.notification-item small{font-size:11px;line-height:1.45;color:var(--muted,#718078)}.notification-item em{font-style:normal;font-size:9px;color:#9aa69f}
 @media(max-width:520px){.notifications-panel{position:fixed;top:68px;right:12px;width:calc(100vw - 24px)}}
+
+/* Fotos dos membros na Área da Família */
+.family-avatar-box{width:42px;height:42px;padding:0;border-radius:50%;display:grid;place-items:center;overflow:hidden;background:#f0f5ef;flex:0 0 42px;}
+.family-avatar{width:100%;height:100%;object-fit:cover;display:block;}
