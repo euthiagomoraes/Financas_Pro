@@ -23,7 +23,7 @@ const SERVICE_LOGOS={
 };
 const SERVICES=[['Netflix','netflix'],['Amazon Prime','amazonprime'],['Uber','uber'],['YouTube Premium','youtube'],['Spotify','spotify'],['Disney+','disneyplus'],['Max','max'],['iCloud+','icloud'],['Google One','googleone'],['Prime Video','primevideo']];
 const DEFAULT_CATEGORIES=[
- ['Alimentação','conta'],['Casa','conta'],['Educação','conta'],['Investimento','conta'],['Lazer','conta'],['Outros','conta'],['Saúde','conta'],['Transporte','conta']
+ ['Alimentação','DESPESA'],['Casa','DESPESA'],['Educação','DESPESA'],['Investimento','DESPESA'],['Lazer','DESPESA'],['Outros','DESPESA'],['Saúde','DESPESA'],['Transporte','DESPESA']
 ];
 const CATEGORY_NAMES=DEFAULT_CATEGORIES.map(([nome])=>nome).sort((a,b)=>a.localeCompare(b,'pt-BR'));
 function icon(n,size=18){return `<i data-lucide="${n}" width="${size}" height="${size}"></i>`}
@@ -230,17 +230,9 @@ async function resolveContaCategoryId(rawValue){
 function contaFormMarkup(c=null){
  const edit=!!c;
  const status=isPaid(c||{})?'Pago':'Pendente';
- const cats = state.categorias
-  .filter(x => {
-    const tipo = String(x.tipo || 'conta').trim().toLowerCase();
-    return tipo === 'conta' || tipo === 'ambos';
-  })
-  .sort((a, b) =>
-    String(a.nome || '').localeCompare(
-      String(b.nome || ''),
-      'pt-BR'
-    )
-  );
+ const cats=state.categorias
+   .filter(x=>{const tipo=String(x.tipo||'conta').toLowerCase();return tipo==='conta'||tipo==='ambos';})
+   .sort((a,b)=>String(a.nome||'').localeCompare(String(b.nome||''),'pt-BR'));
  const currentId=categoryOptionValue(c);
  const currentName=categoryNameFromRecord(c);
  const selectedByName=cats.find(x=>String(x.nome||'').trim().toLocaleLowerCase('pt-BR')===currentName.toLocaleLowerCase('pt-BR'));
@@ -266,16 +258,16 @@ function openContaForm(c=null){
   const basePayload={descricao:String(f.get('descricao')||'').trim(),categoria_id:categoriaId,valor,data_vencimento:f.get('data_vencimento'),status,valor_pago:status==='Pago'?valor:0,data_pagamento:status==='Pago'?today():null,observacao:f.get('observacao')||null};
   const recorrente=f.get('recorrente')==='true';
   let payload={...basePayload,recorrente};
-  let result=edit?await sb.from('contas').update(payload).eq('id',c.id).eq('usuario_id',user.id):await sb.from('contas').insert({...payload,usuario_id:user.id,familia_id:activeFamily?.id});
+  let result=edit?await sb.from('contas').update(payload).eq('id',c.id).eq('familia_id',activeFamily?.id):await sb.from('contas').insert({...payload,usuario_id:user.id,familia_id:activeFamily?.id});
   if(result.error&&(result.error.code==='PGRST204'||result.error.code==='42703'||/recorrente/i.test(result.error.message||''))){
-   result=edit?await sb.from('contas').update(basePayload).eq('id',c.id).eq('usuario_id',user.id):await sb.from('contas').insert({...basePayload,usuario_id:user.id,familia_id:activeFamily?.id});
+   result=edit?await sb.from('contas').update(basePayload).eq('id',c.id).eq('familia_id',activeFamily?.id):await sb.from('contas').insert({...basePayload,usuario_id:user.id,familia_id:activeFamily?.id});
    if(!result.error&&recorrente)toast('Conta salva, mas o campo recorrente ainda não existe no banco. Execute a migração SQL da revisão.');
   }
   if(result.error&&(result.error.code==='23514'||result.error.code==='22P02')){
    const alt={...basePayload,status:status==='Pago'?'pago':'pendente'};
-   result=edit?await sb.from('contas').update({...alt,recorrente}).eq('id',c.id).eq('usuario_id',user.id):await sb.from('contas').insert({...alt,recorrente,usuario_id:user.id,familia_id:activeFamily?.id});
+   result=edit?await sb.from('contas').update({...alt,recorrente}).eq('id',c.id).eq('familia_id',activeFamily?.id):await sb.from('contas').insert({...alt,recorrente,usuario_id:user.id,familia_id:activeFamily?.id});
    if(result.error&&(result.error.code==='PGRST204'||result.error.code==='42703'||/recorrente/i.test(result.error.message||''))){
-    result=edit?await sb.from('contas').update(alt).eq('id',c.id).eq('usuario_id',user.id):await sb.from('contas').insert({...alt,usuario_id:user.id,familia_id:activeFamily?.id})
+    result=edit?await sb.from('contas').update(alt).eq('id',c.id).eq('familia_id',activeFamily?.id):await sb.from('contas').insert({...alt,usuario_id:user.id,familia_id:activeFamily?.id})
    }
   }
   if(result.error)return toast(`Não foi possível ${edit?'atualizar':'gravar'} a conta: ${result.error.message}`);

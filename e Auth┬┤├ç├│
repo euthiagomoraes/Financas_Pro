@@ -1,0 +1,50 @@
+warning: in the working copy of 'app.js', LF will be replaced by CRLF the next time Git touches it
+[1mdiff --git a/app.js b/app.js[m
+[1mindex e1c04f8..015a319 100644[m
+[1m--- a/app.js[m
+[1m+++ b/app.js[m
+[36m@@ -11,7 +11,7 @@[m [mconst SUPABASE_URL = "https://bcepclvnyjobytqasodx.supabase.co";[m
+ const SUPABASE_PUBLISHABLE_KEY =[m
+   "sb_publishable_dtzJI72uUuKsE-bwMwW3Qg_qOpjHkeO";[m
+ [m
+[31m-const supabase = window.supabase.createClient([m
+[32m+[m[32mconst supabaseClient = window.supabase.createClient([m
+   SUPABASE_URL,[m
+   SUPABASE_PUBLISHABLE_KEY[m
+ );[m
+[36m@@ -566,7 +566,7 @@[m [masync function initAuth() {[m
+     const {[m
+       data,[m
+       error[m
+[31m-    } = await supabase.auth.getSession();[m
+[32m+[m[32m    } = await supabaseClient.auth.getSession();[m
+ [m
+ [m
+     if (error) {[m
+[36m@@ -608,7 +608,7 @@[m [masync function initAuth() {[m
+      OBSERVA ALTERAÇÕES DE LOGIN[m
+   ================================= */[m
+ [m
+[31m-  supabase.auth.onAuthStateChange([m
+[32m+[m[32m  supabaseClient.auth.onAuthStateChange([m
+     (_event, session) => {[m
+ [m
+       setTimeout(() => {[m
+[36m@@ -679,7 +679,7 @@[m [m$("#loginForm")?.addEventListener([m
+         data,[m
+         error[m
+       } =[m
+[31m-        await supabase.auth.signInWithPassword({[m
+[32m+[m[32m        await supabaseClient.auth.signInWithPassword({[m
+           email,[m
+           password[m
+         });[m
+[36m@@ -775,7 +775,7 @@[m [m$("#logoutBtn")?.addEventListener([m
+       const {[m
+         error[m
+       } =[m
+[31m-        await supabase.auth.signOut();[m
+[32m+[m[32m        await supabaseClient.auth.signOut();[m
+ [m
+ [m
+       if (error) {[m
