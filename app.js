@@ -23,7 +23,7 @@ const SERVICE_LOGOS={
 };
 const SERVICES=[['Netflix','netflix'],['Amazon Prime','amazonprime'],['Uber','uber'],['YouTube Premium','youtube'],['Spotify','spotify'],['Disney+','disneyplus'],['Max','max'],['iCloud+','icloud'],['Google One','googleone'],['Prime Video','primevideo']];
 const DEFAULT_CATEGORIES=[
- ['Alimentação','DESPESA'],['Casa','DESPESA'],['Educação','DESPESA'],['Investimento','DESPESA'],['Lazer','DESPESA'],['Outros','DESPESA'],['Saúde','DESPESA'],['Transporte','DESPESA']
+ ['Alimentação','conta'],['Casa','conta'],['Educação','conta'],['Investimento','conta'],['Lazer','conta'],['Outros','conta'],['Saúde','conta'],['Transporte','conta']
 ];
 const CATEGORY_NAMES=DEFAULT_CATEGORIES.map(([nome])=>nome).sort((a,b)=>a.localeCompare(b,'pt-BR'));
 function icon(n,size=18){return `<i data-lucide="${n}" width="${size}" height="${size}"></i>`}
@@ -221,7 +221,7 @@ async function resolveContaCategoryId(rawValue){
    return existente.id;
  }
  const created=await sb.from('categorias').insert({
-   usuario_id:user.id,familia_id:activeFamily.id,nome,tipo:'DESPESA',ativo:true
+   usuario_id:user.id,familia_id:activeFamily.id,nome,tipo:'conta',ativo:true
  }).select('*').single();
  if(created.error)throw new Error(`Não foi possível gravar a categoria "${nome}": ${created.error.message}`);
  state.categorias.push(created.data);
@@ -230,9 +230,17 @@ async function resolveContaCategoryId(rawValue){
 function contaFormMarkup(c=null){
  const edit=!!c;
  const status=isPaid(c||{})?'Pago':'Pendente';
- const cats=state.categorias
-   .filter(x=>String(x.tipo||'DESPESA').toUpperCase()==='DESPESA')
-   .sort((a,b)=>String(a.nome||'').localeCompare(String(b.nome||''),'pt-BR'));
+ const cats = state.categorias
+  .filter(x => {
+    const tipo = String(x.tipo || 'conta').trim().toLowerCase();
+    return tipo === 'conta' || tipo === 'ambos';
+  })
+  .sort((a, b) =>
+    String(a.nome || '').localeCompare(
+      String(b.nome || ''),
+      'pt-BR'
+    )
+  );
  const currentId=categoryOptionValue(c);
  const currentName=categoryNameFromRecord(c);
  const selectedByName=cats.find(x=>String(x.nome||'').trim().toLocaleLowerCase('pt-BR')===currentName.toLocaleLowerCase('pt-BR'));
