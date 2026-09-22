@@ -23,7 +23,7 @@ const SERVICE_LOGOS={
 };
 const SERVICES=[['Netflix','netflix'],['Amazon Prime','amazonprime'],['Uber','uber'],['YouTube Premium','youtube'],['Spotify','spotify'],['Disney+','disneyplus'],['Max','max'],['iCloud+','icloud'],['Google One','googleone'],['Prime Video','primevideo']];
 const DEFAULT_CATEGORIES=[
- ['Alimentação','DESPESA'],['Casa','DESPESA'],['Educação','DESPESA'],['Investimento','DESPESA'],['Lazer','DESPESA'],['Outros','DESPESA'],['Saúde','DESPESA'],['Transporte','DESPESA']
+ ['Alimentação','conta'],['Casa','conta'],['Educação','conta'],['Investimento','conta'],['Lazer','conta'],['Outros','conta'],['Saúde','conta'],['Transporte','conta']
 ];
 const CATEGORY_NAMES=DEFAULT_CATEGORIES.map(([nome])=>nome).sort((a,b)=>a.localeCompare(b,'pt-BR'));
 function icon(n,size=18){return `<i data-lucide="${n}" width="${size}" height="${size}"></i>`}
@@ -192,7 +192,7 @@ async function renderFamilyMembers(){
  document.querySelectorAll('[data-remove-member]').forEach(b=>b.onclick=()=>removeFamilyMember(b.dataset.removeMember));
 }
 
-function perfilPage(){return `<div class="toolbar"><div><div class="eyebrow">Minha conta</div><h1>Perfil</h1><p class="muted">Atualize seus dados, sua família e sua senha.</p></div></div><div class="profile-grid"><section class="card profile-card"><div class="profile-big">${avatarUrl()?`<img src="${esc(avatarUrl())}" alt="Foto do perfil">`:icon('user',42)}</div><h2 style="font:800 18px Manrope;margin:0">${esc(name())}</h2><p class="muted">${esc(user?.email||profile?.email||'')}</p><label class="btn btn-soft" style="margin-top:10px">${icon('camera',16)} Alterar foto<input type="file" id="avatarInput" accept="image/*" hidden></label><p class="muted" style="margin-top:12px">A imagem será armazenada no Supabase Storage.</p></section><section class="card profile-form"><form id="profileForm" class="form-grid"><div class="field"><label>Nome completo *</label><input name="nome" value="${esc(profile?.nome||name())}" required maxlength=120></div><div class="field"><label>E-mail</label><input value="${esc(user?.email||profile?.email||'')}" disabled></div><div class="field full"><label>Nome da família *</label><input name="familia" value="${esc(activeFamily?.nome||'Minha Família')}" required maxlength=80></div><div class="field"><label>Nova senha</label><input name="novaSenha" type="password" minlength=6 autocomplete="new-password" placeholder="Deixe em branco para manter"></div><div class="field"><label>Confirmar nova senha</label><input name="confirmarSenha" type="password" minlength=6 autocomplete="new-password" placeholder="Repita a nova senha"></div><div class="form-note full">A alteração da família está disponível para o administrador. A senha é opcional.</div><div class="form-actions profile-actions"><button type="button" class="btn btn-outline" id="enablePushNotifications">${icon('bell',15)} Ativar notificações</button><button type="button" class="btn btn-danger" id="deleteMyAccount">${icon('trash-2',15)} Apagar minha conta</button><button class="btn btn-primary">Salvar perfil</button></div></form></section></div>`}
+function perfilPage(){const tipos=['Esposa','Marido','Namorado','Namorada','Solteiro','Solteira','Filho','Filha','Outro'];const tipoAtual=activeFamily?.tipo||'';return `<div class="toolbar"><div><div class="eyebrow">Minha conta</div><h1>Perfil</h1><p class="muted">Atualize seus dados, sua família, sua identificação e sua senha.</p></div></div><div class="profile-grid"><section class="card profile-card"><div class="profile-big">${avatarUrl()?`<img src="${esc(avatarUrl())}" alt="Foto do perfil">`:icon('user',42)}</div><h2 style="font:800 18px Manrope;margin:0">${esc(name())}</h2><p class="muted">${esc(user?.email||profile?.email||'')}</p><label class="btn btn-soft" style="margin-top:10px">${icon('camera',16)} Alterar foto<input type="file" id="avatarInput" accept="image/*" hidden></label><p class="muted" style="margin-top:12px">A imagem será armazenada no Supabase Storage.</p></section><section class="card profile-form"><form id="profileForm" class="form-grid"><div class="field"><label>Nome completo *</label><input name="nome" value="${esc(profile?.nome||name())}" required maxlength=120></div><div class="field"><label>E-mail</label><input value="${esc(user?.email||profile?.email||'')}" disabled></div><div class="field"><label>Minha identificação *</label><select name="tipo" required><option value="">Selecione</option>${tipos.map(t=>`<option value="${esc(t)}" ${tipoAtual.toLowerCase()===t.toLowerCase()?'selected':''}>${esc(t)}</option>`).join('')}</select></div><div class="field full"><label>Nome da família *</label><input name="familia" value="${esc(activeFamily?.nome||'Minha Família')}" required maxlength=80></div><div class="field"><label>Nova senha</label><input name="novaSenha" type="password" minlength=6 autocomplete="new-password" placeholder="Deixe em branco para manter"></div><div class="field"><label>Confirmar nova senha</label><input name="confirmarSenha" type="password" minlength=6 autocomplete="new-password" placeholder="Repita a nova senha"></div><div class="form-note full">O nome da família pode ser alterado pelo administrador. Sua identificação pode ser atualizada a qualquer momento.</div><div class="form-actions profile-actions"><button type="button" class="btn btn-outline" id="enablePushNotifications">${icon('bell',15)} Ativar notificações</button><button type="button" class="btn btn-danger" id="deleteMyAccount">${icon('trash-2',15)} Apagar minha conta</button><button class="btn btn-primary">Salvar perfil</button></div></form></section></div>`}
 function modal(title,body){$('#modalRoot').innerHTML=`<div class="overlay" id="overlay"><div class="modal"><div class="modal-head"><h2>${title}</h2><button class="close" id="closeModal">${icon('x',18)}</button></div>${body}</div></div>`;refreshIcons();$('#closeModal').onclick=closeModal;$('#overlay').addEventListener('click',e=>{if(e.target.id==='overlay')closeModal()})}
 function closeModal(){$('#modalRoot').innerHTML=''}
 function parseMoney(v){const raw=String(v??'').trim().replace(/R\$\s?/gi,'').replace(/\s/g,'');if(!raw)return 0;if(raw.includes(','))return Number(raw.replace(/\./g,'').replace(',','.'))||0;return Number(raw)||0}
@@ -226,21 +226,217 @@ async function resolveContaCategoryId(rawValue){
  if(created.error)throw new Error(`Não foi possível gravar a categoria "${nome}": ${created.error.message}`);
  state.categorias.push(created.data);
  return created.data.id;
-}
-function contaFormMarkup(c=null){
- const edit=!!c;
- const status=isPaid(c||{})?'Pago':'Pendente';
- const cats=state.categorias
-   .filter(x=>{const tipo=String(x.tipo||'conta').toLowerCase();return tipo==='conta'||tipo==='ambos';})
-   .sort((a,b)=>String(a.nome||'').localeCompare(String(b.nome||''),'pt-BR'));
- const currentId=categoryOptionValue(c);
- const currentName=categoryNameFromRecord(c);
- const selectedByName=cats.find(x=>String(x.nome||'').trim().toLocaleLowerCase('pt-BR')===currentName.toLocaleLowerCase('pt-BR'));
- const selectedId=currentId||selectedByName?.id||'';
- const options=cats.length
-   ?cats.map(x=>`<option value="${esc(x.id)}" ${String(selectedId)===String(x.id)?'selected':''}>${esc(x.nome)}</option>`).join('')
-   :CATEGORY_NAMES.map(nome=>`<option value="__name__:${esc(nome)}" ${currentName.toLocaleLowerCase('pt-BR')===nome.toLocaleLowerCase('pt-BR')?'selected':''}>${esc(nome)}</option>`).join('');
- return `<form id="contaForm" class="form-grid"><div class="field"><label>Descrição</label><input name="descricao" placeholder="Ex.: Energia, internet, aluguel" value="${esc(c?.descricao||'')}" required></div><div class="field"><label>Categoria</label><select name="categoria_id"><option value="">Sem categoria</option>${options}</select></div><div class="field"><label>Valor</label>${moneyInput('valor',c?.valor??'')}</div><div class="field"><label>Vencimento</label><input name="data_vencimento" type="date" value="${c?.vencimento||today()}" required></div><div class="field"><label>Conta recorrente</label><label class="check-field"><input name="recorrente" type="checkbox" value="true" ${c?.recorrente?'checked':''}><span>Marcar como conta recorrente</span></label></div><div class="field"><label>Status</label><select name="status"><option ${status==='Pendente'?'selected':''}>Pendente</option><option ${status==='Pago'?'selected':''}>Pago</option></select></div><div class="field full"><label>Observação</label><textarea name="observacao" placeholder="Opcional">${esc(c?.observacao||'')}</textarea></div><div class="form-actions"><button type="button" class="btn btn-outline" id="cancelForm">Cancelar</button>${edit?`<button type="button" class="btn btn-danger" id="deleteContaForm">${icon('trash-2',15)} Excluir</button>`:''}<button class="btn btn-primary">${edit?'Salvar alterações':'Lançar conta'}</button></div></form>`
+}function contaFormMarkup(c = null) {
+  const edit = !!c;
+  const status = isPaid(c || {}) ? 'Pago' : 'Pendente';
+
+  // Categorias permitidas para contas
+  const cats = state.categorias
+    .filter(x => {
+      const tipo = String(x.tipo || 'conta').toLowerCase();
+      return tipo === 'conta' || tipo === 'ambos';
+    })
+    .sort((a, b) =>
+      String(a.nome || '').localeCompare(
+        String(b.nome || ''),
+        'pt-BR'
+      )
+    );
+
+  const currentId = categoryOptionValue(c);
+  const currentName = categoryNameFromRecord(c);
+
+  const selectedByName = cats.find(x =>
+    String(x.nome || '')
+      .trim()
+      .toLocaleLowerCase('pt-BR') ===
+    currentName.toLocaleLowerCase('pt-BR')
+  );
+
+  const selectedId =
+    currentId || selectedByName?.id || '';
+
+  // Categorias padrão caso não existam registros no Supabase
+  const defaultCategories = [
+    'Alimentação',
+    'Casa',
+    'Educação',
+    'Investimento',
+    'Lazer',
+    'Outros',
+    'Saúde',
+    'Transporte'
+  ];
+
+  const fallbackCategories =
+    typeof CATEGORY_NAMES !== 'undefined' &&
+    Array.isArray(CATEGORY_NAMES) &&
+    CATEGORY_NAMES.length
+      ? CATEGORY_NAMES
+      : defaultCategories;
+
+  const options = cats.length
+    ? cats
+        .map(x => `
+          <option
+            value="${esc(x.id)}"
+            ${
+              String(selectedId) === String(x.id)
+                ? 'selected'
+                : ''
+            }
+          >
+            ${esc(x.nome)}
+          </option>
+        `)
+        .join('')
+    : fallbackCategories
+        .sort((a, b) =>
+          String(a).localeCompare(
+            String(b),
+            'pt-BR'
+          )
+        )
+        .map(nome => `
+          <option
+            value="__name__:${esc(nome)}"
+            ${
+              currentName.toLocaleLowerCase('pt-BR') ===
+              String(nome).toLocaleLowerCase('pt-BR')
+                ? 'selected'
+                : ''
+            }
+          >
+            ${esc(nome)}
+          </option>
+        `)
+        .join('');
+
+  return `
+    <form id="contaForm" class="form-grid">
+
+      <div class="field">
+        <label>Descrição</label>
+        <input
+          name="descricao"
+          placeholder="Ex.: Energia, internet, aluguel"
+          value="${esc(c?.descricao || '')}"
+          required
+        >
+      </div>
+
+      <div class="field">
+        <label>Categoria</label>
+
+        <select name="categoria_id">
+          <option value="">
+            Sem categoria
+          </option>
+
+          ${options}
+        </select>
+      </div>
+
+      <div class="field">
+        <label>Valor</label>
+        ${moneyInput('valor', c?.valor ?? '')}
+      </div>
+
+      <div class="field">
+        <label>Vencimento</label>
+
+        <input
+          name="data_vencimento"
+          type="date"
+          value="${c?.vencimento || today()}"
+          required
+        >
+      </div>
+
+      <div class="field">
+        <label>Conta recorrente</label>
+
+        <label class="check-field">
+          <input
+            name="recorrente"
+            type="checkbox"
+            value="true"
+            ${c?.recorrente ? 'checked' : ''}
+          >
+
+          <span>
+            Marcar como conta recorrente
+          </span>
+        </label>
+      </div>
+
+      <div class="field">
+        <label>Status</label>
+
+        <select name="status">
+          <option
+            ${status === 'Pendente' ? 'selected' : ''}
+          >
+            Pendente
+          </option>
+
+          <option
+            ${status === 'Pago' ? 'selected' : ''}
+          >
+            Pago
+          </option>
+        </select>
+      </div>
+
+      <div class="field full">
+        <label>Observação</label>
+
+        <textarea
+          name="observacao"
+          placeholder="Opcional"
+        >${esc(c?.observacao || '')}</textarea>
+      </div>
+
+      <div class="form-actions">
+
+        <button
+          type="button"
+          class="btn btn-outline"
+          id="cancelForm"
+        >
+          Cancelar
+        </button>
+
+        ${
+          edit
+            ? `
+              <button
+                type="button"
+                class="btn btn-danger"
+                id="deleteContaForm"
+              >
+                ${icon('trash-2', 15)}
+                Excluir
+              </button>
+            `
+            : ''
+        }
+
+        <button
+          class="btn btn-primary"
+          type="submit"
+        >
+          ${
+            edit
+              ? 'Salvar alterações'
+              : 'Lançar conta'
+          }
+        </button>
+
+      </div>
+
+    </form>
+  `;
 }
 function openContaForm(c=null){
  const edit=!!c;
@@ -320,7 +516,7 @@ async function deleteAccount(targetUserId=null){
  if(own){await sb.auth.signOut();return;} await loadFamilies();await loadData();render();toast('Membro removido com sucesso.');
 }
 async function removeFamilyMember(id){if(!isAdmin())return toast('Somente administradores podem remover membros.');if(id===user.id)return;return deleteAccount(id);}
-async function saveProfile(e){e.preventDefault();const f=new FormData(e.currentTarget);const nome=String(f.get('nome')||'').trim();const familia=String(f.get('familia')||'').trim();const novaSenha=String(f.get('novaSenha')||'');const confirmarSenha=String(f.get('confirmarSenha')||'');if(!nome||!familia)return toast('Preencha os campos obrigatórios.');if(novaSenha||confirmarSenha){if(novaSenha.length<6)return toast('A nova senha deve ter pelo menos 6 caracteres.');if(novaSenha!==confirmarSenha)return toast('As senhas não conferem.');}let q=await sb.from('profiles').upsert({id:user.id,nome,email:user.email,ativo:true,updated_at:new Date().toISOString()},{onConflict:'id'});if(q.error){q=await sb.from('perfis').upsert({id:user.id,nome,email:user.email,atualizado_em:new Date().toISOString()},{onConflict:'id'});}if(q.error)return toast(q.error.message);if(activeFamily&&isAdmin()&&familia!==activeFamily.nome){const fq=await sb.from('familias').update({nome:familia}).eq('id',activeFamily.id);if(fq.error)return toast('Não foi possível alterar o nome da família: '+fq.error.message);activeFamily.nome=familia;families=families.map(x=>x.id===activeFamily.id?{...x,nome:familia}:x);}else if(activeFamily&&!isAdmin()&&familia!==activeFamily.nome){return toast('Somente o administrador pode alterar o nome da família.');}if(novaSenha){const sq=await sb.auth.updateUser({password:novaSenha});if(sq.error)return toast('Perfil salvo, mas a senha não foi alterada: '+sq.error.message);}await loadProfile();render();toast('Perfil atualizado.');}
+async function saveProfile(e){e.preventDefault();const f=new FormData(e.currentTarget);const nome=String(f.get('nome')||'').trim();const familia=String(f.get('familia')||'').trim();const tipo=String(f.get('tipo')||'').trim();const novaSenha=String(f.get('novaSenha')||'');const confirmarSenha=String(f.get('confirmarSenha')||'');if(!nome||!familia||!tipo)return toast('Preencha os campos obrigatórios.');if(novaSenha||confirmarSenha){if(novaSenha.length<6)return toast('A nova senha deve ter pelo menos 6 caracteres.');if(novaSenha!==confirmarSenha)return toast('As senhas não conferem.');}let q=await sb.from('profiles').upsert({id:user.id,nome,email:user.email,ativo:true,updated_at:new Date().toISOString()},{onConflict:'id'});if(q.error){q=await sb.from('perfis').upsert({id:user.id,nome,email:user.email,atualizado_em:new Date().toISOString()},{onConflict:'id'});}if(q.error)return toast(q.error.message);if(activeFamily){const mq=await sb.from('familia_membros').update({tipo}).eq('familia_id',activeFamily.id).eq('usuario_id',user.id);if(mq.error)return toast('Não foi possível atualizar sua identificação: '+mq.error.message);activeFamily.tipo=tipo;families=families.map(x=>x.id===activeFamily.id?{...x,tipo}:x);}if(activeFamily&&familia!==activeFamily.nome){if(!isAdmin())return toast('Somente o administrador pode alterar o nome da família.');const fq=await sb.from('familias').update({nome:familia}).eq('id',activeFamily.id);if(fq.error)return toast('Não foi possível alterar o nome da família: '+fq.error.message);activeFamily.nome=familia;families=families.map(x=>x.id===activeFamily.id?{...x,nome:familia}:x);}if(novaSenha){const sq=await sb.auth.updateUser({password:novaSenha});if(sq.error)return toast('Perfil salvo, mas a senha não foi alterada: '+sq.error.message);}await loadProfile();render();toast('Perfil atualizado.');}
 async function uploadAvatar(e){const file=e.target.files?.[0];if(!file)return;if(!file.type.startsWith('image/'))return toast('Selecione uma imagem.');if(file.size>3*1024*1024)return toast('A foto deve ter até 3 MB.');const ext=(file.name.split('.').pop()||'jpg').toLowerCase();const path=`${user.id}/avatar.${ext}`;let q=await sb.storage.from('avatars').upload(path,file,{upsert:true,contentType:file.type});if(q.error)return toast(q.error.message);const {data}=sb.storage.from('avatars').getPublicUrl(path);const avatar_url=data.publicUrl+'?v='+Date.now();let u=await sb.from('profiles').update({avatar_url,updated_at:new Date().toISOString()}).eq('id',user.id);if(u.error)u=await sb.from('perfis').update({avatar_url,atualizado_em:new Date().toISOString()}).eq('id',user.id);if(u.error)return toast(u.error.message);await loadProfile();render();toast('Foto de perfil atualizada.')}
 async function loadProfile(){let q=await sb.from('profiles').select('*').eq('id',user.id).maybeSingle();if(q.data)profile=q.data;else{q=await sb.from('perfis').select('*').eq('id',user.id).maybeSingle();profile=q.data||null}}
 async function seedDefaultCategories(){
@@ -332,9 +528,9 @@ async function seedDefaultCategories(){
 }
 async function loadCategories(){if(!activeFamily){state.categorias=[];return;}const q=await sb.from('categorias').select('*').eq('familia_id',activeFamily.id).eq('ativo',true).order('tipo').order('nome');state.categorias=q.error?[]:(q.data||[]);}
 async function loadFamilies(){
- const {data,error}=await sb.from('familia_membros').select('familia_id,papel,familias(id,nome,criado_em)').eq('usuario_id',user.id);
+ const {data,error}=await sb.from('familia_membros').select('familia_id,papel,tipo,familias(id,nome,criado_em)').eq('usuario_id',user.id);
  if(error){console.warn('Famílias:',error.message);families=[];return}
- families=(data||[]).map(x=>({...x.familias,papel:x.papel})).filter(Boolean);
+ families=(data||[]).map(x=>({...x.familias,papel:x.papel,tipo:x.tipo||''})).filter(Boolean);
  const saved=localStorage.getItem('financas-active-family');activeFamily=families.find(f=>f.id===saved)||families[0]||null;
 }
 async function loadData(){
