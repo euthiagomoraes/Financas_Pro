@@ -196,8 +196,84 @@ function perfilPage(){return `<div class="toolbar"><div><div class="eyebrow">Min
 function modal(title,body){$('#modalRoot').innerHTML=`<div class="overlay" id="overlay"><div class="modal"><div class="modal-head"><h2>${title}</h2><button class="close" id="closeModal">${icon('x',18)}</button></div>${body}</div></div>`;refreshIcons();$('#closeModal').onclick=closeModal;$('#overlay').addEventListener('click',e=>{if(e.target.id==='overlay')closeModal()})}
 function closeModal(){$('#modalRoot').innerHTML=''}
 function parseMoney(v){const raw=String(v??'').trim().replace(/R\$\s?/gi,'').replace(/\s/g,'');if(!raw)return 0;if(raw.includes(','))return Number(raw.replace(/\./g,'').replace(',','.'))||0;return Number(raw)||0}
-function contaFormMarkup(c=null){const edit=!!c;const status=isPaid(c||{})?'Pago':'Pendente';const cats=state.categorias.filter(x=>String(x.tipo||'DESPESA').toUpperCase()==='DESPESA');const options=cats.length?cats.map(x=>`<option value="${x.id}" ${String(c?.categoria_id||'')===String(x.id)?'selected':''}>${esc(x.nome)}</option>`).join(''):CATEGORY_NAMES.map(nome=>`<option value="__name__:${esc(nome)}">${esc(nome)}</option>`).join('');return `<form id="contaForm" class="form-grid"><div class="field"><label>Descrição</label><input name="descricao" placeholder="Ex.: Energia, internet, aluguel" value="${esc(c?.descricao||'')}" required></div><div class="field"><label>Categoria</label><select name="categoria_id"><option value="">Sem categoria</option>${options}</select></div><div class="field"><label>Valor</label>${moneyInput('valor',c?.valor??'')}</div><div class="field"><label>Vencimento</label><input name="data_vencimento" type="date" value="${c?.vencimento||today()}" required></div><div class="field"><label>Conta recorrente</label><label class="check-field"><input name="recorrente" type="checkbox" value="true" ${c?.recorrente?'checked':''}><span>Marcar como conta recorrente</span></label></div><div class="field"><label>Status</label><select name="status"><option ${status==='Pendente'?'selected':''}>Pendente</option><option ${status==='Pago'?'selected':''}>Pago</option></select></div><div class="field full"><label>Observação</label><textarea name="observacao" placeholder="Opcional">${esc(c?.observacao||'')}</textarea></div><div class="form-actions"><button type="button" class="btn btn-outline" id="cancelForm">Cancelar</button>${edit?`<button type="button" class="btn btn-danger" id="deleteContaForm">${icon('trash-2',15)} Excluir</button>`:''}<button class="btn btn-primary">${edit?'Salvar alterações':'Lançar conta'}</button></div></form>`}
-function openContaForm(c=null){const edit=!!c;modal(edit?'Editar conta':'Lançar nova conta',contaFormMarkup(c));bindMoneyInputs($('#contaForm'));$('#cancelForm').onclick=closeModal;$('#deleteContaForm')?.addEventListener('click',()=>deleteRow('contas',c.id,'Conta excluída.'));$('#contaForm').onsubmit=async e=>{e.preventDefault();const f=new FormData(e.currentTarget),status=f.get('status'),valor=parseMoney(f.get('valor'));if(valor<=0)return toast('Informe um valor maior que zero.');let categoriaId=f.get('categoria_id')||null;if(String(categoriaId).startsWith('__name__:')){const nome=String(categoriaId).slice(9);let existente=state.categorias.find(x=>String(x.nome).trim().toLocaleLowerCase('pt-BR')===nome.trim().toLocaleLowerCase('pt-BR'));if(!existente&&activeFamily){const cq=await sb.from('categorias').insert({usuario_id:user.id,familia_id:activeFamily.id,nome,tipo:'DESPESA',ativo:true}).select().single();if(!cq.error){existente=cq.data;state.categorias.push(existente);}}if(existente)categoriaId=existente.id;else categoriaId=null;}const basePayload={descricao:String(f.get('descricao')||'').trim(),categoria_id:categoriaId,valor,data_vencimento:f.get('data_vencimento'),status,valor_pago:status==='Pago'?valor:0,data_pagamento:status==='Pago'?today():null,observacao:f.get('observacao')||null};const recorrente=f.get('recorrente')==='true';let payload={...basePayload,recorrente};let result=edit?await sb.from('contas').update(payload).eq('id',c.id).eq('usuario_id',user.id):await sb.from('contas').insert({...payload,usuario_id:user.id,familia_id:activeFamily?.id});if(result.error&&(result.error.code==='PGRST204'||result.error.code==='42703'||/recorrente/i.test(result.error.message||''))){result=edit?await sb.from('contas').update(basePayload).eq('id',c.id).eq('usuario_id',user.id):await sb.from('contas').insert({...basePayload,usuario_id:user.id,familia_id:activeFamily?.id});if(!result.error&&recorrente)toast('Conta salva, mas o campo recorrente ainda não existe no banco. Execute a migração SQL da revisão.')}if(result.error&&(result.error.code==='23514'||result.error.code==='22P02')){const alt={...basePayload,status:status==='Pago'?'pago':'pendente'};result=edit?await sb.from('contas').update({...alt,recorrente}).eq('id',c.id).eq('usuario_id',user.id):await sb.from('contas').insert({...alt,recorrente,usuario_id:user.id,familia_id:activeFamily?.id});if(result.error&&(result.error.code==='PGRST204'||result.error.code==='42703'||/recorrente/i.test(result.error.message||''))){result=edit?await sb.from('contas').update(alt).eq('id',c.id).eq('usuario_id',user.id):await sb.from('contas').insert({...alt,usuario_id:user.id})}}if(result.error)return toast(`Não foi possível ${edit?'atualizar':'gravar'} a conta: ${result.error.message}`);closeModal();await loadData();render();if(!edit)showAlicePopup('new');toast(edit?'Conta atualizada com sucesso.':'Conta gravada com sucesso.')}}
+function categoryNameFromRecord(c){
+ const raw=c?.categoria_nome||c?.categoria||c?.categoriaName||'';
+ return String(raw).trim();
+}
+function categoryOptionValue(c){
+ const id=c?.categoria_id??c?.category_id??'';
+ return String(id);
+}
+async function resolveContaCategoryId(rawValue){
+ const value=String(rawValue||'').trim();
+ if(!value)return null;
+ if(!value.startsWith('__name__:'))return value;
+ const nome=value.slice('__name__:'.length).trim();
+ const normalized=nome.toLocaleLowerCase('pt-BR');
+ let existente=state.categorias.find(x=>String(x.nome||'').trim().toLocaleLowerCase('pt-BR')===normalized);
+ if(existente?.id)return existente.id;
+ if(!activeFamily?.id)throw new Error('Nenhuma família ativa foi encontrada.');
+ const q=await sb.from('categorias').select('*').eq('familia_id',activeFamily.id).eq('ativo',true);
+ if(q.error)throw new Error(`Não foi possível consultar categorias: ${q.error.message}`);
+ existente=(q.data||[]).find(x=>String(x.nome||'').trim().toLocaleLowerCase('pt-BR')===normalized);
+ if(existente?.id){
+   state.categorias=[...state.categorias.filter(x=>x.id!==existente.id),existente];
+   return existente.id;
+ }
+ const created=await sb.from('categorias').insert({
+   usuario_id:user.id,familia_id:activeFamily.id,nome,tipo:'DESPESA',ativo:true
+ }).select('*').single();
+ if(created.error)throw new Error(`Não foi possível gravar a categoria "${nome}": ${created.error.message}`);
+ state.categorias.push(created.data);
+ return created.data.id;
+}
+function contaFormMarkup(c=null){
+ const edit=!!c;
+ const status=isPaid(c||{})?'Pago':'Pendente';
+ const cats=state.categorias
+   .filter(x=>String(x.tipo||'DESPESA').toUpperCase()==='DESPESA')
+   .sort((a,b)=>String(a.nome||'').localeCompare(String(b.nome||''),'pt-BR'));
+ const currentId=categoryOptionValue(c);
+ const currentName=categoryNameFromRecord(c);
+ const selectedByName=cats.find(x=>String(x.nome||'').trim().toLocaleLowerCase('pt-BR')===currentName.toLocaleLowerCase('pt-BR'));
+ const selectedId=currentId||selectedByName?.id||'';
+ const options=cats.length
+   ?cats.map(x=>`<option value="${esc(x.id)}" ${String(selectedId)===String(x.id)?'selected':''}>${esc(x.nome)}</option>`).join('')
+   :CATEGORY_NAMES.map(nome=>`<option value="__name__:${esc(nome)}" ${currentName.toLocaleLowerCase('pt-BR')===nome.toLocaleLowerCase('pt-BR')?'selected':''}>${esc(nome)}</option>`).join('');
+ return `<form id="contaForm" class="form-grid"><div class="field"><label>Descrição</label><input name="descricao" placeholder="Ex.: Energia, internet, aluguel" value="${esc(c?.descricao||'')}" required></div><div class="field"><label>Categoria</label><select name="categoria_id"><option value="">Sem categoria</option>${options}</select></div><div class="field"><label>Valor</label>${moneyInput('valor',c?.valor??'')}</div><div class="field"><label>Vencimento</label><input name="data_vencimento" type="date" value="${c?.vencimento||today()}" required></div><div class="field"><label>Conta recorrente</label><label class="check-field"><input name="recorrente" type="checkbox" value="true" ${c?.recorrente?'checked':''}><span>Marcar como conta recorrente</span></label></div><div class="field"><label>Status</label><select name="status"><option ${status==='Pendente'?'selected':''}>Pendente</option><option ${status==='Pago'?'selected':''}>Pago</option></select></div><div class="field full"><label>Observação</label><textarea name="observacao" placeholder="Opcional">${esc(c?.observacao||'')}</textarea></div><div class="form-actions"><button type="button" class="btn btn-outline" id="cancelForm">Cancelar</button>${edit?`<button type="button" class="btn btn-danger" id="deleteContaForm">${icon('trash-2',15)} Excluir</button>`:''}<button class="btn btn-primary">${edit?'Salvar alterações':'Lançar conta'}</button></div></form>`
+}
+function openContaForm(c=null){
+ const edit=!!c;
+ modal(edit?'Editar conta':'Lançar nova conta',contaFormMarkup(c));
+ bindMoneyInputs($('#contaForm'));
+ $('#cancelForm').onclick=closeModal;
+ $('#deleteContaForm')?.addEventListener('click',()=>deleteRow('contas',c.id,'Conta excluída.'));
+ $('#contaForm').onsubmit=async e=>{
+  e.preventDefault();
+  const f=new FormData(e.currentTarget),status=f.get('status'),valor=parseMoney(f.get('valor'));
+  if(valor<=0)return toast('Informe um valor maior que zero.');
+  let categoriaId=null;
+  try{categoriaId=await resolveContaCategoryId(f.get('categoria_id'));}
+  catch(err){console.error(err);return toast(err.message||'Não foi possível salvar a categoria.');}
+  const basePayload={descricao:String(f.get('descricao')||'').trim(),categoria_id:categoriaId,valor,data_vencimento:f.get('data_vencimento'),status,valor_pago:status==='Pago'?valor:0,data_pagamento:status==='Pago'?today():null,observacao:f.get('observacao')||null};
+  const recorrente=f.get('recorrente')==='true';
+  let payload={...basePayload,recorrente};
+  let result=edit?await sb.from('contas').update(payload).eq('id',c.id).eq('usuario_id',user.id):await sb.from('contas').insert({...payload,usuario_id:user.id,familia_id:activeFamily?.id});
+  if(result.error&&(result.error.code==='PGRST204'||result.error.code==='42703'||/recorrente/i.test(result.error.message||''))){
+   result=edit?await sb.from('contas').update(basePayload).eq('id',c.id).eq('usuario_id',user.id):await sb.from('contas').insert({...basePayload,usuario_id:user.id,familia_id:activeFamily?.id});
+   if(!result.error&&recorrente)toast('Conta salva, mas o campo recorrente ainda não existe no banco. Execute a migração SQL da revisão.');
+  }
+  if(result.error&&(result.error.code==='23514'||result.error.code==='22P02')){
+   const alt={...basePayload,status:status==='Pago'?'pago':'pendente'};
+   result=edit?await sb.from('contas').update({...alt,recorrente}).eq('id',c.id).eq('usuario_id',user.id):await sb.from('contas').insert({...alt,recorrente,usuario_id:user.id,familia_id:activeFamily?.id});
+   if(result.error&&(result.error.code==='PGRST204'||result.error.code==='42703'||/recorrente/i.test(result.error.message||''))){
+    result=edit?await sb.from('contas').update(alt).eq('id',c.id).eq('usuario_id',user.id):await sb.from('contas').insert({...alt,usuario_id:user.id,familia_id:activeFamily?.id})
+   }
+  }
+  if(result.error)return toast(`Não foi possível ${edit?'atualizar':'gravar'} a conta: ${result.error.message}`);
+  closeModal();await loadData();render();if(!edit)showAlicePopup('new');toast(edit?'Conta atualizada com sucesso.':'Conta gravada com sucesso.')
+ }
+}
 function newConta(){openContaForm()}
 function editConta(id){const c=state.contas.find(x=>x.id===id);if(c)openContaForm(c)}
 function newLoan(){modal('Novo empréstimo',`<form id="loanForm" class="form-grid"><div class="field"><label>Descrição</label><input name="descricao" required></div><div class="field"><label>Credor</label><input name="credor" required></div><div class="field"><label>Valor contratado</label>${moneyInput('valor_contratado')}</div><div class="field"><label>Quantidade de parcelas</label><input name="quantidade_parcelas" type="number" inputmode="numeric" min="1" step="1" required></div><div class="field"><label>Valor da parcela</label>${moneyInput('valor_parcela')}</div><div class="field"><label>Valor total</label>${moneyInput('valor_total','',true,'readonly aria-readonly="true"')}</div><div class="field"><label>Primeiro vencimento</label><input name="primeiro_vencimento" type="date" value="${today()}" required></div><div class="field"><label>Status</label><select name="status"><option>Ativo</option><option>Quitado</option><option>Cancelado</option></select></div><div class="field full"><label>Observação</label><textarea name="observacao"></textarea></div><div class="form-actions"><button type="button" class="btn btn-outline" id="cancelForm">Cancelar</button><button class="btn btn-primary">Salvar empréstimo</button></div></form>`);bindMoneyInputs($('#loanForm'));const qty=$('#loanForm [name="quantidade_parcelas"]'),inst=$('#loanForm [name="valor_parcela"]'),total=$('#loanForm [name="valor_total"]');const updateTotal=()=>{const q=Number(qty.value)||0,v=parseMoney(inst.value);total.value=q&&v?money(q*v):'R$ 0,00'};qty.addEventListener('input',updateTotal);inst.addEventListener('input',updateTotal);inst.addEventListener('blur',updateTotal);$('#cancelForm').onclick=closeModal;$('#loanForm').onsubmit=async e=>{e.preventDefault();const f=new FormData(e.currentTarget),q=Number(f.get('quantidade_parcelas')),vp=parseMoney(f.get('valor_parcela')),vc=parseMoney(f.get('valor_contratado')),vt=q*vp;if(!q||q<1)return toast('Informe a quantidade de parcelas.');if(vp<=0)return toast('Informe o valor da parcela.');if(vc<0)return toast('Valor contratado inválido.');const p={usuario_id:user.id,familia_id:activeFamily?.id,descricao:String(f.get('descricao')).trim(),credor:String(f.get('credor')).trim(),valor_contratado:vc,valor_total:vt,quantidade_parcelas:q,valor_parcela:vp,primeiro_vencimento:f.get('primeiro_vencimento'),status:f.get('status'),observacao:f.get('observacao')||null};let loanResult=await sb.from('emprestimos').insert(p).select('id').single();if(loanResult.error&&loanResult.error.code==='23514'){loanResult=await sb.from('emprestimos').insert({...p,status:String(p.status).toLowerCase()}).select('id').single()}if(loanResult.error)return toast(`Não foi possível gravar o empréstimo: ${loanResult.error.message}`);const data=loanResult.data;const first=new Date(p.primeiro_vencimento+'T12:00:00');const ps=Array.from({length:q},(_,i)=>{const d=new Date(first.getFullYear(),first.getMonth()+i,first.getDate());return{emprestimo_id:data.id,usuario_id:user.id,familia_id:activeFamily?.id,numero_parcela:i+1,data_vencimento:iso(d),valor:vp,status:'Pendente',valor_pago:0,data_pagamento:null,observacao:null}});let parcelResult=await sb.from('emprestimo_parcelas').insert(ps);if(parcelResult.error&&parcelResult.error.code==='23514')parcelResult=await sb.from('emprestimo_parcelas').insert(ps.map(x=>({...x,usuario_id:user.id,familia_id:activeFamily?.id,status:'pendente'})));if(parcelResult.error){await sb.from('emprestimos').delete().eq('id',data.id).eq('usuario_id',user.id);return toast(`As parcelas não foram gravadas. O empréstimo foi revertido: ${parcelResult.error.message}`)}closeModal();await loadData();render();toast('Empréstimo e parcelas gravados com sucesso.')}}
