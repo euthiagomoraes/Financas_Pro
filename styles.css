@@ -183,3 +183,5 @@
 @media (orientation:landscape) and (max-height:520px){.splash-art img{object-fit:contain;background:#e9eee8}.splash-loader{bottom:16px}}
 .notifications-panel[hidden]{display:none!important}
 .notifications-panel{max-height:min(70vh,520px);overflow:auto}
+
+.dashboard-link{cursor:pointer;transition:transform .18s ease,box-shadow .18s ease}.dashboard-link:focus-visible{outline:3px solid var(--green-2);outline-offset:3px}.dashboard-link:hover{transform:translateY(-2px)}
