@@ -231,17 +231,22 @@ async function resolveContaCategoryId(rawValue){
   const status = isPaid(c || {}) ? 'Pago' : 'Pendente';
 
   // Categorias permitidas para contas
-  const cats = state.categorias
+  // Filtra categorias válidas e remove duplicidades por nome.
+  // O banco pode conter registros repetidos criados por versões anteriores.
+  const uniqueCategories = new Map();
+  state.categorias
     .filter(x => {
-      const tipo = String(x.tipo || 'conta').toLowerCase();
-      return tipo === 'conta' || tipo === 'ambos';
+      const tipo = String(x.tipo || 'conta').trim().toLowerCase();
+      return (tipo === 'conta' || tipo === 'ambos') && String(x.nome || '').trim();
     })
-    .sort((a, b) =>
-      String(a.nome || '').localeCompare(
-        String(b.nome || ''),
-        'pt-BR'
-      )
-    );
+    .forEach(x => {
+      const key = String(x.nome || '').trim().toLocaleLowerCase('pt-BR');
+      if (!uniqueCategories.has(key)) uniqueCategories.set(key, x);
+    });
+
+  const cats = [...uniqueCategories.values()].sort((a, b) =>
+    String(a.nome || '').localeCompare(String(b.nome || ''), 'pt-BR')
+  );
 
   const currentId = categoryOptionValue(c);
   const currentName = categoryNameFromRecord(c);
@@ -522,8 +527,8 @@ async function loadProfile(){let q=await sb.from('profiles').select('*').eq('id'
 async function seedDefaultCategories(){
  const {data,error}=await sb.from('categorias').select('nome,tipo').eq('usuario_id',user.id);
  if(error)return console.warn('Categorias padrão:',error.message);
- const existing=new Set((data||[]).map(x=>`${String(x.nome).trim().toLowerCase()}|${String(x.tipo).trim().toUpperCase()}`));
- const missing=DEFAULT_CATEGORIES.filter(([nome,tipo])=>!existing.has(`${nome.toLowerCase()}|${tipo}`)).map(([nome,tipo])=>({usuario_id:user.id,familia_id:activeFamily?.id,nome,tipo,ativo:true}));
+ const existing=new Set((data||[]).map(x=>`${String(x.nome||'').trim().toLocaleLowerCase('pt-BR')}|${String(x.tipo||'').trim().toLowerCase()}`));
+ const missing=DEFAULT_CATEGORIES.filter(([nome,tipo])=>!existing.has(`${nome.trim().toLocaleLowerCase('pt-BR')}|${tipo.trim().toLowerCase()}`)).map(([nome,tipo])=>({usuario_id:user.id,familia_id:activeFamily?.id,nome,tipo,ativo:true}));
  if(missing.length){const q=await sb.from('categorias').insert(missing);if(q.error)console.warn('Categorias padrão:',q.error.message)}
 }
 async function loadCategories(){if(!activeFamily){state.categorias=[];return;}const q=await sb.from('categorias').select('*').eq('familia_id',activeFamily.id).eq('ativo',true).order('tipo').order('nome');state.categorias=q.error?[]:(q.data||[]);}
