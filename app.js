@@ -592,24 +592,25 @@ async function saveProfile(e){
    // Agora pedimos a linha atualizada de volta e só alteramos o estado local
    // depois que o Supabase confirmar a persistência.
    const familyId=activeFamily.id;
-   const fq=await sb.from('familias')
-     .update({nome:familia})
-     .eq('id',familyId)
-     .select('id,nome')
-     .maybeSingle();
+
+   // Usa uma função RPC SECURITY DEFINER para que a autorização seja validada
+   // no banco e o UPDATE não dependa de uma combinação frágil de políticas RLS.
+   const fq=await sb.rpc('renomear_familia', {p_familia_id:familyId, p_nome:familia});
 
    if(fq.error){
-     return toast('Não foi possível alterar o nome da família: '+fq.error.message);
+     console.error('Erro ao renomear família:', fq.error);
+     return toast('Não foi possível alterar o nome da família: '+(fq.error.message||'erro no Supabase'));
    }
-   if(!fq.data){
-     return toast('O nome não foi salvo. Verifique se seu usuário é administrador desta família e se a política RLS de UPDATE da tabela familias está ativa.');
+   const row=Array.isArray(fq.data)?fq.data[0]:fq.data;
+   if(!row){
+     return toast('O nome não foi salvo. Verifique se seu usuário é administrador desta família.');
    }
-   if(String(fq.data.nome||'').trim()!==familia){
+   if(String(row.nome||'').trim()!==familia){
      return toast('O Supabase não confirmou o novo nome da família.');
    }
 
-   activeFamily={...activeFamily,nome:fq.data.nome};
-   families=families.map(x=>x.id===familyId?{...x,nome:fq.data.nome}:x);
+   activeFamily={...activeFamily,nome:row.nome};
+   families=families.map(x=>x.id===familyId?{...x,nome:row.nome}:x);
  }
  if(novaSenha){
    const sq=await sb.auth.updateUser({password:novaSenha});
