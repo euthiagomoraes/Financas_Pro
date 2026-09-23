@@ -1,4 +1,4 @@
-/* Finanças Pro — Revisão 7
+/* Finanças Pro — Revisão 8
    Mobile first • Supabase • sem dados fictícios • preserva as tabelas existentes
 */
 const CFG=window.FINANCAS_CONFIG||{};
@@ -530,27 +530,99 @@ async function deleteAccount(targetUserId=null){
  if(own){await sb.auth.signOut();return;} await loadFamilies();await loadData();render();toast('Membro removido com sucesso.');
 }
 async function removeFamilyMember(id){if(!isAdmin())return toast('Somente administradores podem remover membros.');if(id===user.id)return;return deleteAccount(id);}
-async function saveProfile(e){e.preventDefault();const f=new FormData(e.currentTarget);const nome=String(f.get('nome')||'').trim();const familia=String(f.get('familia')||'').trim();const tipo=String(f.get('tipo')||'').trim();const novaSenha=String(f.get('novaSenha')||'');const confirmarSenha=String(f.get('confirmarSenha')||'');if(!nome||!familia||!tipo)return toast('Preencha os campos obrigatórios.');if(novaSenha||confirmarSenha){if(novaSenha.length<6)return toast('A nova senha deve ter pelo menos 6 caracteres.');if(novaSenha!==confirmarSenha)return toast('As senhas não conferem.');}
- let q=await sb.from('profiles').upsert({id:user.id,nome,email:user.email,ativo:true,updated_at:new Date().toISOString()},{onConflict:'id'});if(q.error){q=await sb.from('perfis').upsert({id:user.id,nome,email:user.email,atualizado_em:new Date().toISOString()},{onConflict:'id'});}if(q.error)return toast(q.error.message);
- if(activeFamily){
-  const rpc=await sb.rpc('update_my_family_identification',{
-   p_family_id:activeFamily.id,
-   p_tipo:tipo
-  });
-  if(rpc.error){
-   console.error('Identificação:',rpc.error);
-   return toast('Não foi possível salvar sua identificação: '+rpc.error.message);
-  }
-  const savedRow=Array.isArray(rpc.data)?rpc.data[0]:rpc.data;
-  if(String(savedRow?.tipo||'').trim()!==tipo){
-   return toast('O Supabase não confirmou a identificação salva. Execute o SQL de correção e tente novamente.');
-  }
-  activeFamily={...activeFamily,tipo};
-  families=families.map(x=>x.id===activeFamily.id?{...x,tipo}:x);
+async function saveProfile(e){
+ e.preventDefault();
+ const f=new FormData(e.currentTarget);
+ const nome=String(f.get('nome')||'').trim();
+ const familia=String(f.get('familia')||'').trim();
+ const tipo=String(f.get('tipo')||'').trim();
+ const novaSenha=String(f.get('novaSenha')||'');
+ const confirmarSenha=String(f.get('confirmarSenha')||'');
+ if(!nome||!familia||!tipo)return toast('Preencha os campos obrigatórios.');
+ if(novaSenha||confirmarSenha){
+  if(novaSenha.length<6)return toast('A nova senha deve ter pelo menos 6 caracteres.');
+  if(novaSenha!==confirmarSenha)return toast('As senhas não conferem.');
  }
- if(activeFamily&&familia!==activeFamily.nome){if(!isAdmin())return toast('Somente o administrador pode alterar o nome da família.');const fq=await sb.from('familias').update({nome:familia}).eq('id',activeFamily.id);if(fq.error)return toast('Não foi possível alterar o nome da família: '+fq.error.message);activeFamily.nome=familia;families=families.map(x=>x.id===activeFamily.id?{...x,nome:familia}:x);}
- if(novaSenha){const sq=await sb.auth.updateUser({password:novaSenha});if(sq.error)return toast('Perfil salvo, mas a senha não foi alterada: '+sq.error.message);}
- await loadProfile();render();toast('Perfil atualizado.');}
+
+ let q=await sb.from('profiles').upsert(
+  {id:user.id,nome,email:user.email,ativo:true,updated_at:new Date().toISOString()},
+  {onConflict:'id'}
+ );
+ if(q.error){
+  q=await sb.from('perfis').upsert(
+   {id:user.id,nome,email:user.email,atualizado_em:new Date().toISOString()},
+   {onConflict:'id'}
+  );
+ }
+ if(q.error)return toast(q.error.message);
+
+ if(activeFamily){
+  // A identificação pertence ao vínculo do usuário com a família.
+  // Grava diretamente em familia_membros.tipo, sem RPC.
+  let memberId=activeFamily.member_id;
+
+  // Se o vínculo em memória não estiver disponível, recarrega do Supabase.
+  if(!memberId){
+   const memberQuery=await sb.from('familia_membros')
+    .select('id,familia_id,tipo,papel')
+    .eq('familia_id',activeFamily.id)
+    .eq('usuario_id',user.id)
+    .maybeSingle();
+   if(memberQuery.error)return toast('Não foi possível localizar seu vínculo com a família: '+memberQuery.error.message);
+   memberId=memberQuery.data?.id;
+   if(memberId){
+    activeFamily={...activeFamily,member_id:memberId,papel:memberQuery.data.papel,tipo:memberQuery.data.tipo||''};
+    families=families.map(x=>x.id===activeFamily.id?{...x,...activeFamily}:x);
+   }
+  }
+
+  if(!memberId)return toast('Não foi possível localizar seu vínculo com a família. Recarregue a página e tente novamente.');
+
+  const updated=await sb.from('familia_membros')
+   .update({tipo})
+   .eq('id',memberId)
+   .eq('usuario_id',user.id)
+   .select('id,tipo')
+   .maybeSingle();
+
+  if(updated.error){
+   console.error('Identificação:',updated.error);
+   return toast('Não foi possível salvar sua identificação: '+updated.error.message);
+  }
+
+  const savedTipo=String(updated.data?.tipo||'').trim();
+  if(savedTipo!==tipo){
+   console.error('Identificação não confirmada:',{memberId,expected:tipo,returned:updated.data});
+   return toast('O Supabase não confirmou a identificação salva.');
+  }
+
+  activeFamily={...activeFamily,tipo:savedTipo,member_id:memberId};
+  families=families.map(x=>x.id===activeFamily.id?{...x,tipo:savedTipo,member_id:memberId}:x);
+ }
+
+ if(activeFamily&&familia!==activeFamily.nome){
+  if(!isAdmin())return toast('Somente o administrador pode alterar o nome da família.');
+  const fq=await sb.from('familias').update({nome:familia}).eq('id',activeFamily.id);
+  if(fq.error)return toast('Não foi possível alterar o nome da família: '+fq.error.message);
+  activeFamily.nome=familia;
+  families=families.map(x=>x.id===activeFamily.id?{...x,nome:familia}:x);
+ }
+
+ if(novaSenha){
+  const sq=await sb.auth.updateUser({password:novaSenha});
+  if(sq.error)return toast('Perfil salvo, mas a senha não foi alterada: '+sq.error.message);
+ }
+
+ await loadProfile();
+ await loadFamilies();
+
+ // Reidentifica a família ativa após o reload para garantir persistência real.
+ const reloadedFamily=families.find(x=>x.id===activeFamily?.id);
+ if(reloadedFamily)activeFamily=reloadedFamily;
+
+ render();
+ toast('Perfil atualizado.');
+}
 async function uploadAvatar(e){const file=e.target.files?.[0];if(!file)return;if(!file.type.startsWith('image/'))return toast('Selecione uma imagem.');if(file.size>3*1024*1024)return toast('A foto deve ter até 3 MB.');const ext=(file.name.split('.').pop()||'jpg').toLowerCase();const path=`${user.id}/avatar.${ext}`;let q=await sb.storage.from('avatars').upload(path,file,{upsert:true,contentType:file.type});if(q.error)return toast(q.error.message);const {data}=sb.storage.from('avatars').getPublicUrl(path);const avatar_url=data.publicUrl+'?v='+Date.now();let u=await sb.from('profiles').update({avatar_url,updated_at:new Date().toISOString()}).eq('id',user.id);if(u.error)u=await sb.from('perfis').update({avatar_url,atualizado_em:new Date().toISOString()}).eq('id',user.id);if(u.error)return toast(u.error.message);await loadProfile();render();toast('Foto de perfil atualizada.')}
 async function loadProfile(){let q=await sb.from('profiles').select('*').eq('id',user.id).maybeSingle();if(q.data)profile=q.data;else{q=await sb.from('perfis').select('*').eq('id',user.id).maybeSingle();profile=q.data||null}}
 async function seedDefaultCategories(){

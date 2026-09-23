@@ -1,7 +1,16 @@
-# Correção da identificação do usuário
+# Persistência da identificação do usuário
 
-A versão anterior tentava chamar a função RPC `update_my_family_identification`, mas essa função não existe no banco atual. Isso gerava o erro `PGRST202 / Could not find the function`.
+A identificação digitada em **Minha identificação** pertence ao vínculo do usuário com a família e é gravada em `public.familia_membros.tipo`.
 
-Esta versão **não usa RPC**. Ela atualiza diretamente `public.familia_membros.tipo` pelo `id` do vínculo do usuário.
+A aplicação não usa RPC para esta gravação.
 
-Antes de publicar, execute uma vez o arquivo `corrigir-identificacao-direto.sql` no Supabase SQL Editor. Ele cria a coluna `tipo` (caso necessário) e a política RLS para cada usuário atualizar apenas seu próprio vínculo.
+Fluxo:
+1. `loadFamilies()` carrega `id`, `familia_id`, `papel` e `tipo` do vínculo.
+2. `saveProfile()` atualiza `familia_membros.tipo` pelo `id` do vínculo e pelo `usuario_id` autenticado.
+3. O Supabase retorna o registro atualizado.
+4. A aplicação confirma que o valor devolvido é exatamente o texto digitado.
+5. Depois recarrega as famílias para garantir que o valor exibido vem do banco.
+
+Antes de publicar, execute uma vez `corrigir-identificacao-v8.sql` no Supabase SQL Editor. Esse SQL não cria tabela nova: apenas garante a coluna `tipo` e a política RLS de atualização do próprio usuário.
+
+A versão anterior que chamava `update_my_family_identification` foi removida.
