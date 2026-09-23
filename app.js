@@ -1,4 +1,4 @@
-/* Finanças Pro — Revisão 8
+/* Finanças Pro — Revisão 7
    Mobile first • Supabase • sem dados fictícios • preserva as tabelas existentes
 */
 const CFG=window.FINANCAS_CONFIG||{};
@@ -119,7 +119,7 @@ function emprestimos(){
   if(loanFilter==='Quitados')return settled;
   return true;
  });
- return `<div class="toolbar"><div><div class="eyebrow">Crédito e compromissos</div><h1>Empréstimos</h1><p class="muted"></p></div><button class="btn btn-primary" data-action="new-loan">${icon('plus',17)} Novo empréstimo</button></div><div class="toolbar-left"><button class="tab ${loanFilter==='Ativos'?'active':''}" data-loan-filter="Ativos">Ativos</button><button class="tab ${loanFilter==='Quitados'?'active':''}" data-loan-filter="Quitados">Quitados</button><button class="tab ${loanFilter==='Todos'?'active':''}" data-loan-filter="Todos">Todos</button></div><div class="loan-grid" style="margin-top:14px">${rows.length?rows.map(l=>{const ps=state.parcelas.filter(p=>p.emprestimo_id===l.id),pg=ps.filter(isPaid).length,pct=l.parcelas?Math.min(100,pg/l.parcelas*100):0,settled=loanIsSettled(l),displayStatus=loanDisplayStatus(l);return `<article class="card loan-card loan-card-clickable" data-open-loan="${l.id}" tabindex="0" role="button"><div class="loan-top"><div class="loan-icon">${icon('hand-coins',21)}</div><span class="status ${settled?'inactive':'active'}">${esc(displayStatus)}</span></div><h3 style="margin-top:13px">${esc(l.descricao)}</h3><p class="muted">${esc(l.credor)}</p><div class="money" style="font-size:22px;margin-top:10px">${money(l.total)}</div><p class="muted">${l.parcelas} parcelas • primeiro vencimento ${dateBR(l.primeira)}</p><div class="progress"><i style="width:${pct}%"></i></div><div class="loan-meta"><span>${pg}/${l.parcelas||0} parcelas pagas</span><button class="link-btn" data-edit-loan="${l.id}">Editar</button></div></article>`}).join(''):'<div class="card empty" style="grid-column:1/-1">Nenhum empréstimo cadastrado.</div>'}</div>`}
+ return `<div class="toolbar"><div><div class="eyebrow">Crédito e compromissos</div><h1>Empréstimos</h1><p class="muted">Parcelas relacionadas permanecem no Supabase.</p></div><button class="btn btn-primary" data-action="new-loan">${icon('plus',17)} Novo empréstimo</button></div><div class="toolbar-left"><button class="tab ${loanFilter==='Ativos'?'active':''}" data-loan-filter="Ativos">Ativos</button><button class="tab ${loanFilter==='Quitados'?'active':''}" data-loan-filter="Quitados">Quitados</button><button class="tab ${loanFilter==='Todos'?'active':''}" data-loan-filter="Todos">Todos</button></div><div class="loan-grid" style="margin-top:14px">${rows.length?rows.map(l=>{const ps=state.parcelas.filter(p=>p.emprestimo_id===l.id),pg=ps.filter(isPaid).length,pct=l.parcelas?Math.min(100,pg/l.parcelas*100):0,settled=loanIsSettled(l),displayStatus=loanDisplayStatus(l);return `<article class="card loan-card loan-card-clickable" data-open-loan="${l.id}" tabindex="0" role="button"><div class="loan-top"><div class="loan-icon">${icon('hand-coins',21)}</div><span class="status ${settled?'inactive':'active'}">${esc(displayStatus)}</span></div><h3 style="margin-top:13px">${esc(l.descricao)}</h3><p class="muted">${esc(l.credor)}</p><div class="money" style="font-size:22px;margin-top:10px">${money(l.total)}</div><p class="muted">${l.parcelas} parcelas • primeiro vencimento ${dateBR(l.primeira)}</p><div class="progress"><i style="width:${pct}%"></i></div><div class="loan-meta"><span>${pg}/${l.parcelas||0} parcelas pagas</span><button class="link-btn" data-edit-loan="${l.id}">Editar</button></div></article>`}).join(''):'<div class="card empty" style="grid-column:1/-1">Nenhum empréstimo cadastrado.</div>'}</div>`}
 
 function openLoanDetails(id){
  const l=state.emprestimos.find(x=>x.id===id);if(!l)return;
@@ -139,8 +139,8 @@ function editLoan(id){
 
 function calendario(){const d=calendarDate,first=new Date(d.getFullYear(),d.getMonth(),1),start=first.getDay(),days=new Date(d.getFullYear(),d.getMonth()+1,0).getDate(),cells=[];for(let i=0;i<start;i++)cells.push(`<div class="day muted-day"></div>`);for(let day=1;day<=days;day++){const ds=iso(new Date(d.getFullYear(),d.getMonth(),day));const hasB=state.contas.some(c=>c.vencimento===ds),hasL=state.parcelas.some(p=>p.data_vencimento===ds),hasS=state.assinaturas.some(s=>s.ativa&&Number(s.dia_vencimento)===day);cells.push(`<div class="day ${ds===today()?'today':''}"><strong>${day}</strong><div class="event-dots">${hasB?'<i class="event-dot bill"></i>':''}${hasL?'<i class="event-dot loan"></i>':''}${hasS?'<i class="event-dot sub"></i>':''}</div></div>`)}return `<div class="toolbar"><div><div class="eyebrow">Planejamento</div><h1>Calendário</h1><p class="muted">Contas, empréstimos e assinaturas em uma única visão.</p></div></div><div class="calendar-layout"><section class="card calendar-card"><div class="month-nav"><button class="icon-btn" data-month="-1">${icon('chevron-left',17)}</button><h2>${monthName(d)}</h2><button class="icon-btn" data-month="1">${icon('chevron-right',17)}</button></div><div class="calendar-grid">${['D','S','T','Q','Q','S','S'].map(x=>`<div class="weekday">${x}</div>`).join('')}${cells.join('')}</div><div class="legend" style="margin-top:14px"><span><i class="dot" style="background:#ed626c"></i>Contas</span><span><i class="dot" style="background:#5796d9"></i>Empréstimos</span><span><i class="dot" style="background:#e5a03a"></i>Assinaturas</span></div></section><section class="card section-card"><div class="section-head"><div><h2>Eventos do mês</h2><p>${monthName(d)}</p></div></div><div class="upcoming">${calendarEvents(d).length?calendarEvents(d).map(e=>`<div class="up-item"><div class="date-box"><strong>${new Date(e.date+'T12:00:00').getDate()}</strong><small>${new Date(e.date+'T12:00:00').toLocaleDateString('pt-BR',{month:'short'}).replace('.','')}</small></div><div class="up-copy"><strong>${esc(e.title)}</strong><small>${e.kind} • ${money(e.value)}</small></div></div>`).join(''):'<div class="empty">Nenhum evento no mês.</div>'}</div></section></div>`}
 function calendarEvents(d){const y=d.getFullYear(),m=d.getMonth();const arr=[];state.contas.forEach(c=>{const x=new Date(c.vencimento+'T12:00:00');if(x.getFullYear()===y&&x.getMonth()===m)arr.push({date:c.vencimento,title:c.descricao,value:c.valor,kind:'Conta'})});state.parcelas.forEach(p=>{const x=new Date(p.data_vencimento+'T12:00:00');if(x.getFullYear()===y&&x.getMonth()===m)arr.push({date:p.data_vencimento,title:`Parcela ${p.numero_parcela}`,value:p.valor,kind:'Empréstimo'})});state.assinaturas.filter(s=>s.ativa).forEach(s=>{const day=Math.min(Number(s.dia_vencimento)||1,new Date(y,m+1,0).getDate()),ds=iso(new Date(y,m,day));arr.push({date:ds,title:s.servico,value:s.valor,kind:'Assinatura'})});return arr.sort((a,b)=>a.date.localeCompare(b.date)).slice(0,25)}
-function assinaturas(){const total=state.assinaturas.filter(s=>s.ativa).reduce((a,s)=>a+s.valor,0);return `<div class="toolbar"><div><div class="eyebrow">Custos recorrentes</div><h1>Assinaturas</h1><p class="muted"></p></div><button class="btn btn-primary" data-action="new-sub">${icon('plus',17)} Adicionar</button></div><div class="sub-total"><span class="muted">Total mensal ativo</span><strong>${money(total)}</strong><span class="muted">${state.assinaturas.filter(s=>s.ativa).length} assinatura(s) ativa(s)</span></div><div class="subscription-grid">${state.assinaturas.length?state.assinaturas.map(s=>`<article class="card sub-card"><div class="service-logo">${SERVICE_LOGOS[s.icone_slug]?`<img src="${SERVICE_LOGOS[s.icone_slug]}" alt="${esc(s.servico)}" onerror="this.style.display='none'">`:icon('repeat-2',24)} </div><div class="sub-info"><h3>${esc(s.servico)}</h3><div class="muted">${money(s.valor)}/mês • vencimento dia ${s.dia_vencimento}</div></div><div><span class="status ${s.ativa?'active':'inactive'}">${s.ativa?'Ativa':'Inativa'}</span><div class="sub-actions" style="margin-top:8px"><button class="btn btn-danger" data-delete-sub="${s.id}">${icon('trash-2',14)}</button></div></div></article>`).join(''):'<div class="card empty" style="grid-column:1/-1">Nenhuma assinatura cadastrada. Adicione seus serviços recorrentes para acompanhar o custo mensal.</div>'}</div>`}
-function relatorios(){const now=new Date(),m=now.getMonth(),y=now.getFullYear();const bills=state.contas.filter(c=>{const d=new Date(c.vencimento+'T12:00:00');return d.getMonth()===m&&d.getFullYear()===y});const total=bills.reduce((a,c)=>a+Number(c.valor||0),0),paid=bills.filter(isPaid).reduce((a,c)=>a+Number(c.valor||0),0),pending=total-paid,subs=state.assinaturas.filter(s=>s.ativa).reduce((a,s)=>a+Number(s.valor||0),0),loans=state.emprestimos.filter(l=>String(l.status).toLowerCase()==='ativo').reduce((a,l)=>a+Number(l.total||0),0);const groups={};bills.forEach(c=>{const cat=state.categorias.find(x=>String(x.id)===String(c.categoria_id));const key=cat?.nome||'Sem categoria';groups[key]=(groups[key]||0)+Number(c.valor||0)});const categoryRows=Object.entries(groups).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`<div class="metric-row"><span>${esc(k)}</span><div class="metric-bar"><i style="width:${Math.min(100,total? v/total*100:0)}%"></i></div><strong>${money(v)}</strong></div>`).join('')||'<div class="empty">Nenhum lançamento categorizado neste mês.</div>';return `<div class="toolbar"><div><div class="eyebrow">Análise</div><h1>Relatórios</h1><p class="muted">Resumo dos seus registros.</p></div></div><div class="kpis"><article class="card kpi green"><small>Total lançado</small><h3>${money(total)}</h3><p>${bills.length} contas</p></article><article class="card kpi green"><small>Pago</small><h3>${money(paid)}</h3><p>${total?Math.round(paid/total*100):0}% do total</p></article><article class="card kpi red"><small>Pendente</small><h3>${money(pending)}</h3><p>${bills.filter(c=>!isPaid(c)).length} contas</p></article><article class="card kpi gold"><small>Assinaturas</small><h3>${money(subs)}</h3><p>custo mensal</p></article></div><div class="report-grid" style="margin-top:14px"><section class="card section-card"><div class="section-head"><div><h2>Análise por categoria</h2><p>${monthName(now)}</p></div></div><div class="metric-list">${categoryRows}</div></section><section class="card section-card"><div class="section-head"><div><h2>Compromissos</h2><p>${monthName(now)}</p></div></div><div class="metric-list"><div class="metric-row"><span>Assinaturas</span><div class="metric-bar"><i style="width:${Math.min(100,subs/Math.max(total,1)*100)}%"></i></div><strong>${money(subs)}/mês</strong></div><div class="metric-row"><span>Empréstimos ativos</span><div class="metric-bar"><i style="width:${Math.min(100,loans>0?60:0)}%"></i></div><strong>${money(loans)}</strong></div></div></section></div>`}
+function assinaturas(){const total=state.assinaturas.filter(s=>s.ativa).reduce((a,s)=>a+s.valor,0);return `<div class="toolbar"><div><div class="eyebrow">Custos recorrentes</div><h1>Assinaturas</h1><p class="muted">Até 10 serviços por usuário, com identidade visual do serviço.</p></div><button class="btn btn-primary" data-action="new-sub">${icon('plus',17)} Adicionar</button></div><div class="sub-total"><span class="muted">Total mensal ativo</span><strong>${money(total)}</strong><span class="muted">${state.assinaturas.filter(s=>s.ativa).length} assinatura(s) ativa(s)</span></div><div class="subscription-grid">${state.assinaturas.length?state.assinaturas.map(s=>`<article class="card sub-card"><div class="service-logo">${SERVICE_LOGOS[s.icone_slug]?`<img src="${SERVICE_LOGOS[s.icone_slug]}" alt="${esc(s.servico)}" onerror="this.style.display='none'">`:icon('repeat-2',24)} </div><div class="sub-info"><h3>${esc(s.servico)}</h3><div class="muted">${money(s.valor)}/mês • vencimento dia ${s.dia_vencimento}</div></div><div><span class="status ${s.ativa?'active':'inactive'}">${s.ativa?'Ativa':'Inativa'}</span><div class="sub-actions" style="margin-top:8px"><button class="btn btn-danger" data-delete-sub="${s.id}">${icon('trash-2',14)}</button></div></div></article>`).join(''):'<div class="card empty" style="grid-column:1/-1">Nenhuma assinatura cadastrada. Adicione seus serviços recorrentes para acompanhar o custo mensal.</div>'}</div>`}
+function relatorios(){const now=new Date(),m=now.getMonth(),y=now.getFullYear();const bills=state.contas.filter(c=>{const d=new Date(c.vencimento+'T12:00:00');return d.getMonth()===m&&d.getFullYear()===y});const total=bills.reduce((a,c)=>a+Number(c.valor||0),0),paid=bills.filter(isPaid).reduce((a,c)=>a+Number(c.valor||0),0),pending=total-paid,subs=state.assinaturas.filter(s=>s.ativa).reduce((a,s)=>a+Number(s.valor||0),0),loans=state.emprestimos.filter(l=>String(l.status).toLowerCase()==='ativo').reduce((a,l)=>a+Number(l.total||0),0);const groups={};bills.forEach(c=>{const cat=state.categorias.find(x=>String(x.id)===String(c.categoria_id));const key=cat?.nome||'Sem categoria';groups[key]=(groups[key]||0)+Number(c.valor||0)});const categoryRows=Object.entries(groups).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`<div class="metric-row"><span>${esc(k)}</span><div class="metric-bar"><i style="width:${Math.min(100,total? v/total*100:0)}%"></i></div><strong>${money(v)}</strong></div>`).join('')||'<div class="empty">Nenhum lançamento categorizado neste mês.</div>';return `<div class="toolbar"><div><div class="eyebrow">Análise</div><h1>Relatórios</h1><p class="muted">Resumo baseado somente nos seus registros.</p></div></div><div class="kpis"><article class="card kpi green"><small>Total lançado</small><h3>${money(total)}</h3><p>${bills.length} contas</p></article><article class="card kpi green"><small>Pago</small><h3>${money(paid)}</h3><p>${total?Math.round(paid/total*100):0}% do total</p></article><article class="card kpi red"><small>Pendente</small><h3>${money(pending)}</h3><p>${bills.filter(c=>!isPaid(c)).length} contas</p></article><article class="card kpi gold"><small>Assinaturas</small><h3>${money(subs)}</h3><p>custo mensal</p></article></div><div class="report-grid" style="margin-top:14px"><section class="card section-card"><div class="section-head"><div><h2>Análise por categoria</h2><p>${monthName(now)}</p></div></div><div class="metric-list">${categoryRows}</div></section><section class="card section-card"><div class="section-head"><div><h2>Compromissos</h2><p>${monthName(now)}</p></div></div><div class="metric-list"><div class="metric-row"><span>Assinaturas</span><div class="metric-bar"><i style="width:${Math.min(100,subs/Math.max(total,1)*100)}%"></i></div><strong>${money(subs)}/mês</strong></div><div class="metric-row"><span>Empréstimos ativos</span><div class="metric-bar"><i style="width:${Math.min(100,loans>0?60:0)}%"></i></div><strong>${money(loans)}</strong></div></div></section></div>`}
 
 function moneyInput(name,value='',required=true,extra=''){
   const display=value===''?'':money(value);
@@ -170,10 +170,10 @@ async function renderFamilyMembers(){
  if(q.error){root.innerHTML=`<p class="muted">${esc(q.error.message)}</p>`;return}
  const ids=[...new Set((q.data||[]).map(x=>x.usuario_id))];let profiles=[];
  if(ids.length){
-   const pr=await sb.from('profiles').select('id,nome,email,avatar_url').in('id',ids);
+   const pr=await sb.from('profiles').select('id,nome,email,avatar_url,tipo').in('id',ids);
    profiles=pr.data||[];
    if(!profiles.length){
-     const legacy=await sb.from('perfis').select('id,nome,email,avatar_url').in('id',ids);
+     const legacy=await sb.from('perfis').select('id,nome,email,avatar_url,tipo').in('id',ids);
      profiles=legacy.data||[];
    }else{
      // Alguns usuários antigos podem ter a foto apenas em public.perfis.
@@ -189,7 +189,7 @@ async function renderFamilyMembers(){
  root.innerHTML=(q.data||[]).map(m=>{
    const pr=byId[m.usuario_id]||{};
    const admin=String(m.papel||'').toLowerCase()==='admin';
-   const relationship=m.tipo||(admin?'Esposa':'');
+   const relationship=String(pr.tipo||m.tipo||(admin?'Esposa':'')).trim();
    const roleLabel=admin?'Adm':'Membro';
    const canRemove=isAdmin()&&m.usuario_id!==user.id;
    const avatar=pr.avatar_url?`<img src="${esc(pr.avatar_url)}" alt="Foto de ${esc(pr.nome||'usuário')}" class="family-avatar">`:icon('user',16);
@@ -198,7 +198,7 @@ async function renderFamilyMembers(){
  document.querySelectorAll('[data-remove-member]').forEach(b=>b.onclick=()=>removeFamilyMember(b.dataset.removeMember));
 }
 
-function perfilPage(){const tipos=['Esposa','Marido','Namorado','Namorada','Solteiro','Solteira','Filho','Filha','Outro'];const tipoAtual=activeFamily?.tipo||'';return `<div class="toolbar"><div><div class="eyebrow">Minha conta</div><h1>Perfil</h1><p class="muted">Atualize seus dados, sua família, sua identificação e sua senha.</p></div></div><div class="profile-grid"><section class="card profile-card"><div class="profile-big">${avatarUrl()?`<img src="${esc(avatarUrl())}" alt="Foto do perfil">`:icon('user',42)}</div><h2 style="font:800 18px Manrope;margin:0">${esc(name())}</h2><p class="muted">${esc(user?.email||profile?.email||'')}</p><label class="btn btn-soft" style="margin-top:10px">${icon('camera',16)} Alterar foto<input type="file" id="avatarInput" accept="image/*" hidden></label><p class="muted" style="margin-top:12px">A imagem será armazenada no Supabase Storage.</p></section><section class="card profile-form"><form id="profileForm" class="form-grid"><div class="field"><label>Nome completo *</label><input name="nome" value="${esc(profile?.nome||name())}" required maxlength=120></div><div class="field"><label>E-mail</label><input value="${esc(user?.email||profile?.email||'')}" disabled></div><div class="field"><label>Minha identificação *</label><input name="tipo" value="${esc(tipoAtual)}" placeholder="Ex.: Marido, Poderoso chefão, Eu que mando na casa" required maxlength="80"></div><div class="field full"><label>Nome da família *</label><input name="familia" value="${esc(activeFamily?.nome||'Minha Família')}" required maxlength=80></div><div class="field"><label>Nova senha</label><input name="novaSenha" type="password" minlength=6 autocomplete="new-password" placeholder="Deixe em branco para manter"></div><div class="field"><label>Confirmar nova senha</label><input name="confirmarSenha" type="password" minlength=6 autocomplete="new-password" placeholder="Repita a nova senha"></div><div class="form-note full">O nome da família pode ser alterado pelo administrador. Sua identificação pode ser atualizada a qualquer momento.</div><div class="form-actions profile-actions"><button type="button" class="btn btn-outline" id="enablePushNotifications">${icon('bell',15)} Ativar notificações</button><button type="button" class="btn btn-danger" id="deleteMyAccount">${icon('trash-2',15)} Apagar minha conta</button><button class="btn btn-primary">Salvar perfil</button></div></form></section></div>`}
+function perfilPage(){const tipoAtual=String(profile?.tipo||activeFamily?.tipo||'').trim();return `<div class="toolbar"><div><div class="eyebrow">Minha conta</div><h1>Perfil</h1><p class="muted">Atualize seus dados, sua família, sua identificação e sua senha.</p></div></div><div class="profile-grid"><section class="card profile-card"><div class="profile-big">${avatarUrl()?`<img src="${esc(avatarUrl())}" alt="Foto do perfil">`:icon('user',42)}</div><h2 style="font:800 18px Manrope;margin:0">${esc(name())}</h2><p class="muted">${esc(user?.email||profile?.email||'')}</p><label class="btn btn-soft" style="margin-top:10px">${icon('camera',16)} Alterar foto<input type="file" id="avatarInput" accept="image/*" hidden></label><p class="muted" style="margin-top:12px">A imagem será armazenada no Supabase Storage.</p></section><section class="card profile-form"><form id="profileForm" class="form-grid"><div class="field"><label>Nome completo *</label><input name="nome" value="${esc(profile?.nome||name())}" required maxlength=120></div><div class="field"><label>E-mail</label><input value="${esc(user?.email||profile?.email||'')}" disabled></div><div class="field"><label>Minha identificação *</label><input name="tipo" value="${esc(tipoAtual)}" placeholder="Ex.: Marido, Poderoso chefão, Eu que mando na casa" required maxlength="80"></div><div class="field full"><label>Nome da família *</label><input name="familia" value="${esc(activeFamily?.nome||'Minha Família')}" required maxlength=80></div><div class="field"><label>Nova senha</label><input name="novaSenha" type="password" minlength=6 autocomplete="new-password" placeholder="Deixe em branco para manter"></div><div class="field"><label>Confirmar nova senha</label><input name="confirmarSenha" type="password" minlength=6 autocomplete="new-password" placeholder="Repita a nova senha"></div><div class="form-note full">O nome da família pode ser alterado pelo administrador. Sua identificação pode ser atualizada a qualquer momento.</div><div class="form-actions profile-actions"><button type="button" class="btn btn-outline" id="enablePushNotifications">${icon('bell',15)} Ativar notificações</button><button type="button" class="btn btn-danger" id="deleteMyAccount">${icon('trash-2',15)} Apagar minha conta</button><button class="btn btn-primary">Salvar perfil</button></div></form></section></div>`}
 function modal(title,body){$('#modalRoot').innerHTML=`<div class="overlay" id="overlay"><div class="modal"><div class="modal-head"><h2>${title}</h2><button class="close" id="closeModal">${icon('x',18)}</button></div>${body}</div></div>`;refreshIcons();$('#closeModal').onclick=closeModal;$('#overlay').addEventListener('click',e=>{if(e.target.id==='overlay')closeModal()})}
 function closeModal(){$('#modalRoot').innerHTML=''}
 function parseMoney(v){const raw=String(v??'').trim().replace(/R\$\s?/gi,'').replace(/\s/g,'');if(!raw)return 0;if(raw.includes(','))return Number(raw.replace(/\./g,'').replace(',','.'))||0;return Number(raw)||0}
@@ -540,86 +540,62 @@ async function saveProfile(e){
  const confirmarSenha=String(f.get('confirmarSenha')||'');
  if(!nome||!familia||!tipo)return toast('Preencha os campos obrigatórios.');
  if(novaSenha||confirmarSenha){
-  if(novaSenha.length<6)return toast('A nova senha deve ter pelo menos 6 caracteres.');
-  if(novaSenha!==confirmarSenha)return toast('As senhas não conferem.');
+   if(novaSenha.length<6)return toast('A nova senha deve ter pelo menos 6 caracteres.');
+   if(novaSenha!==confirmarSenha)return toast('As senhas não conferem.');
  }
 
- let q=await sb.from('profiles').upsert(
-  {id:user.id,nome,email:user.email,ativo:true,updated_at:new Date().toISOString()},
-  {onConflict:'id'}
- );
+ // A identificação é uma informação livre do perfil do usuário.
+ // Não atualizamos familia_membros.tipo porque essa coluna pode possuir
+ // uma restrição/check legado que aceite somente alguns papéis.
+ // O valor persistente fica em profiles.tipo.
+ let q=await sb.from('profiles')
+   .update({nome,email:user.email,ativo:true,tipo,updated_at:new Date().toISOString()})
+   .eq('id',user.id);
+
  if(q.error){
-  q=await sb.from('perfis').upsert(
-   {id:user.id,nome,email:user.email,atualizado_em:new Date().toISOString()},
-   {onConflict:'id'}
-  );
+   q=await sb.from('perfis')
+     .update({nome,email:user.email,ativo:true,tipo,atualizado_em:new Date().toISOString()})
+     .eq('id',user.id);
  }
- if(q.error)return toast(q.error.message);
+
+ if(q.error)return toast('Não foi possível salvar seu perfil: '+q.error.message);
+
+ // Recarrega do Supabase e confirma a persistência antes de informar sucesso.
+ await loadProfile();
+ if(String(profile?.tipo||'').trim()!==tipo){
+   // Perfil inexistente na tabela principal: tenta criar/atualizar de forma idempotente.
+   let retry=await sb.from('profiles').upsert({
+     id:user.id,nome,email:user.email,ativo:true,tipo,updated_at:new Date().toISOString()
+   },{onConflict:'id'});
+   if(retry.error){
+     retry=await sb.from('perfis').upsert({
+       id:user.id,nome,email:user.email,ativo:true,tipo,atualizado_em:new Date().toISOString()
+     },{onConflict:'id'});
+   }
+   if(retry.error)return toast('Não foi possível salvar sua identificação: '+retry.error.message);
+   await loadProfile();
+   if(String(profile?.tipo||'').trim()!==tipo){
+     return toast('O Supabase não confirmou a identificação salva.');
+   }
+ }
 
  if(activeFamily){
-  // A identificação pertence ao vínculo do usuário com a família.
-  // Grava diretamente em familia_membros.tipo, sem RPC.
-  let memberId=activeFamily.member_id;
-
-  // Se o vínculo em memória não estiver disponível, recarrega do Supabase.
-  if(!memberId){
-   const memberQuery=await sb.from('familia_membros')
-    .select('id,familia_id,tipo,papel')
-    .eq('familia_id',activeFamily.id)
-    .eq('usuario_id',user.id)
-    .maybeSingle();
-   if(memberQuery.error)return toast('Não foi possível localizar seu vínculo com a família: '+memberQuery.error.message);
-   memberId=memberQuery.data?.id;
-   if(memberId){
-    activeFamily={...activeFamily,member_id:memberId,papel:memberQuery.data.papel,tipo:memberQuery.data.tipo||''};
-    families=families.map(x=>x.id===activeFamily.id?{...x,...activeFamily}:x);
-   }
-  }
-
-  if(!memberId)return toast('Não foi possível localizar seu vínculo com a família. Recarregue a página e tente novamente.');
-
-  const updated=await sb.from('familia_membros')
-   .update({tipo})
-   .eq('id',memberId)
-   .eq('usuario_id',user.id)
-   .select('id,tipo')
-   .maybeSingle();
-
-  if(updated.error){
-   console.error('Identificação:',updated.error);
-   return toast('Não foi possível salvar sua identificação: '+updated.error.message);
-  }
-
-  const savedTipo=String(updated.data?.tipo||'').trim();
-  if(savedTipo!==tipo){
-   console.error('Identificação não confirmada:',{memberId,expected:tipo,returned:updated.data});
-   return toast('O Supabase não confirmou a identificação salva.');
-  }
-
-  activeFamily={...activeFamily,tipo:savedTipo,member_id:memberId};
-  families=families.map(x=>x.id===activeFamily.id?{...x,tipo:savedTipo,member_id:memberId}:x);
+   activeFamily={...activeFamily,tipo};
+   families=families.map(x=>x.id===activeFamily.id?{...x,tipo}:x);
  }
 
  if(activeFamily&&familia!==activeFamily.nome){
-  if(!isAdmin())return toast('Somente o administrador pode alterar o nome da família.');
-  const fq=await sb.from('familias').update({nome:familia}).eq('id',activeFamily.id);
-  if(fq.error)return toast('Não foi possível alterar o nome da família: '+fq.error.message);
-  activeFamily.nome=familia;
-  families=families.map(x=>x.id===activeFamily.id?{...x,nome:familia}:x);
+   if(!isAdmin())return toast('Somente o administrador pode alterar o nome da família.');
+   const fq=await sb.from('familias').update({nome:familia}).eq('id',activeFamily.id);
+   if(fq.error)return toast('Não foi possível alterar o nome da família: '+fq.error.message);
+   activeFamily.nome=familia;
+   families=families.map(x=>x.id===activeFamily.id?{...x,nome:familia}:x);
  }
-
  if(novaSenha){
-  const sq=await sb.auth.updateUser({password:novaSenha});
-  if(sq.error)return toast('Perfil salvo, mas a senha não foi alterada: '+sq.error.message);
+   const sq=await sb.auth.updateUser({password:novaSenha});
+   if(sq.error)return toast('Perfil salvo, mas a senha não foi alterada: '+sq.error.message);
  }
-
  await loadProfile();
- await loadFamilies();
-
- // Reidentifica a família ativa após o reload para garantir persistência real.
- const reloadedFamily=families.find(x=>x.id===activeFamily?.id);
- if(reloadedFamily)activeFamily=reloadedFamily;
-
  render();
  toast('Perfil atualizado.');
 }

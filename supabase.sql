@@ -164,10 +164,6 @@ create table if not exists public.familia_membros (
   unique(familia_id, usuario_id)
 );
 
--- Identificação livre do usuário no vínculo familiar (ex.: Marido, Namorado, Poderoso chefão).
-alter table public.familia_membros
-  add column if not exists tipo text;
-
 alter table public.contas add column if not exists familia_id uuid references public.familias(id) on delete cascade;
 alter table public.contas_recorrentes add column if not exists familia_id uuid references public.familias(id) on delete cascade;
 alter table public.categorias add column if not exists familia_id uuid references public.familias(id) on delete cascade;
@@ -218,12 +214,6 @@ drop policy if exists familia_membros_select_member on public.familia_membros;
 drop policy if exists familia_membros_insert_admin on public.familia_membros;
 create policy familia_membros_select_member on public.familia_membros for select using (public.is_family_member(familia_id));
 create policy familia_membros_insert_admin on public.familia_membros for insert with check (public.is_family_member(familia_id));
-
-drop policy if exists familia_membros_update_own_type on public.familia_membros;
-create policy familia_membros_update_own_type on public.familia_membros
-for update to authenticated
-using (usuario_id=auth.uid())
-with check (usuario_id=auth.uid());
 
 -- Substitui políticas próprias por políticas baseadas na família.
 DO $$

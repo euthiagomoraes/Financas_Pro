@@ -11,3 +11,7 @@ Exemplo:
 `Marido` → `Namorado`
 
 O valor principal será persistido em `profiles.tipo` e continuará aparecendo após recarregar a página.
+
+
+## Correção aplicada nesta revisão
+A identificação digitada pelo usuário é persistida em `profiles.tipo` (ou `perfis.tipo` como legado). A rotina de salvar perfil não altera `familia_membros.tipo`, evitando conflitos com restrições/checks legados dessa coluna.
