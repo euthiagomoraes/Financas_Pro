@@ -1,4 +1,4 @@
-/* Finanças Pro — Revisão 6
+/* Finanças Pro — Revisão 7
    Mobile first • Supabase • sem dados fictícios • preserva as tabelas existentes
 */
 const CFG=window.FINANCAS_CONFIG||{};
@@ -533,20 +533,20 @@ async function removeFamilyMember(id){if(!isAdmin())return toast('Somente admini
 async function saveProfile(e){e.preventDefault();const f=new FormData(e.currentTarget);const nome=String(f.get('nome')||'').trim();const familia=String(f.get('familia')||'').trim();const tipo=String(f.get('tipo')||'').trim();const novaSenha=String(f.get('novaSenha')||'');const confirmarSenha=String(f.get('confirmarSenha')||'');if(!nome||!familia||!tipo)return toast('Preencha os campos obrigatórios.');if(novaSenha||confirmarSenha){if(novaSenha.length<6)return toast('A nova senha deve ter pelo menos 6 caracteres.');if(novaSenha!==confirmarSenha)return toast('As senhas não conferem.');}
  let q=await sb.from('profiles').upsert({id:user.id,nome,email:user.email,ativo:true,updated_at:new Date().toISOString()},{onConflict:'id'});if(q.error){q=await sb.from('perfis').upsert({id:user.id,nome,email:user.email,atualizado_em:new Date().toISOString()},{onConflict:'id'});}if(q.error)return toast(q.error.message);
  if(activeFamily){
-  let memberId=activeFamily.member_id;
-  if(!memberId){
-   const link=await sb.from('familia_membros').select('id').eq('familia_id',activeFamily.id).eq('usuario_id',user.id).maybeSingle();
-   if(link.error)return toast('Não foi possível localizar seu vínculo com a família: '+link.error.message);
-   memberId=link.data?.id||null;
+  const rpc=await sb.rpc('update_my_family_identification',{
+   p_family_id:activeFamily.id,
+   p_tipo:tipo
+  });
+  if(rpc.error){
+   console.error('Identificação:',rpc.error);
+   return toast('Não foi possível salvar sua identificação: '+rpc.error.message);
   }
-  if(!memberId)return toast('Não foi possível localizar seu vínculo com a família. Recarregue a página e tente novamente.');
-  const mq=await sb.from('familia_membros').update({tipo}).eq('id',memberId).eq('usuario_id',user.id);
-  if(mq.error)return toast('Não foi possível atualizar sua identificação: '+mq.error.message);
-  await loadFamilies();
-  const refreshedFamily=families.find(x=>x.id===activeFamily.id);
-  const savedTipo=String(refreshedFamily?.tipo||'').trim();
-  if(!refreshedFamily||savedTipo!==tipo)return toast('A identificação não foi gravada no Supabase. Verifique a política de atualização de familia_membros e execute o SQL de correção.');
-  activeFamily=refreshedFamily;
+  const savedRow=Array.isArray(rpc.data)?rpc.data[0]:rpc.data;
+  if(String(savedRow?.tipo||'').trim()!==tipo){
+   return toast('O Supabase não confirmou a identificação salva. Execute o SQL de correção e tente novamente.');
+  }
+  activeFamily={...activeFamily,tipo};
+  families=families.map(x=>x.id===activeFamily.id?{...x,tipo}:x);
  }
  if(activeFamily&&familia!==activeFamily.nome){if(!isAdmin())return toast('Somente o administrador pode alterar o nome da família.');const fq=await sb.from('familias').update({nome:familia}).eq('id',activeFamily.id);if(fq.error)return toast('Não foi possível alterar o nome da família: '+fq.error.message);activeFamily.nome=familia;families=families.map(x=>x.id===activeFamily.id?{...x,nome:familia}:x);}
  if(novaSenha){const sq=await sb.auth.updateUser({password:novaSenha});if(sq.error)return toast('Perfil salvo, mas a senha não foi alterada: '+sq.error.message);}
