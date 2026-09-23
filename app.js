@@ -533,7 +533,12 @@ async function removeFamilyMember(id){if(!isAdmin())return toast('Somente admini
 async function saveProfile(e){e.preventDefault();const f=new FormData(e.currentTarget);const nome=String(f.get('nome')||'').trim();const familia=String(f.get('familia')||'').trim();const tipo=String(f.get('tipo')||'').trim();const novaSenha=String(f.get('novaSenha')||'');const confirmarSenha=String(f.get('confirmarSenha')||'');if(!nome||!familia||!tipo)return toast('Preencha os campos obrigatórios.');if(novaSenha||confirmarSenha){if(novaSenha.length<6)return toast('A nova senha deve ter pelo menos 6 caracteres.');if(novaSenha!==confirmarSenha)return toast('As senhas não conferem.');}
  let q=await sb.from('profiles').upsert({id:user.id,nome,email:user.email,ativo:true,updated_at:new Date().toISOString()},{onConflict:'id'});if(q.error){q=await sb.from('perfis').upsert({id:user.id,nome,email:user.email,atualizado_em:new Date().toISOString()},{onConflict:'id'});}if(q.error)return toast(q.error.message);
  if(activeFamily){
-  const memberId=activeFamily.member_id;
+  let memberId=activeFamily.member_id;
+  if(!memberId){
+   const link=await sb.from('familia_membros').select('id').eq('familia_id',activeFamily.id).eq('usuario_id',user.id).maybeSingle();
+   if(link.error)return toast('Não foi possível localizar seu vínculo com a família: '+link.error.message);
+   memberId=link.data?.id||null;
+  }
   if(!memberId)return toast('Não foi possível localizar seu vínculo com a família. Recarregue a página e tente novamente.');
   const mq=await sb.from('familia_membros').update({tipo}).eq('id',memberId).eq('usuario_id',user.id);
   if(mq.error)return toast('Não foi possível atualizar sua identificação: '+mq.error.message);
@@ -557,7 +562,7 @@ async function seedDefaultCategories(){
 }
 async function loadCategories(){if(!activeFamily){state.categorias=[];return;}const q=await sb.from('categorias').select('*').eq('familia_id',activeFamily.id).eq('ativo',true).order('tipo').order('nome');state.categorias=q.error?[]:(q.data||[]);}
 async function loadFamilies(){
- const {data,error}=await sb.from('familia_membros').select('familia_id,papel,tipo,familias(id,nome,criado_em)').eq('usuario_id',user.id);
+ const {data,error}=await sb.from('familia_membros').select('id,familia_id,papel,tipo,familias(id,nome,criado_em)').eq('usuario_id',user.id);
  if(error){console.warn('Famílias:',error.message);families=[];return}
  families=(data||[]).map(x=>({...x.familias,member_id:x.id,papel:x.papel,tipo:x.tipo||''})).filter(Boolean);
  const saved=localStorage.getItem('financas-active-family');activeFamily=families.find(f=>f.id===saved)||families[0]||null;
