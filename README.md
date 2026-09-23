@@ -32,3 +32,7 @@ Execute `corrigir-familia-notificacoes.sql` no SQL Editor do Supabase. Esta migr
 A Área da Família também passou a carregar `avatar_url` dos membros em `profiles` e, quando necessário, em `perfis`.
 
 **VAPID:** a chave pública foi deixada como placeholder nesta revisão para não reutilizar uma chave antiga. Coloque no `index.html` a nova Public Key do par VAPID que está configurado nos Secrets do Supabase.
+
+### Correção da identificação do usuário
+
+Execute `corrigir-identificacao.sql` no SQL Editor do Supabase antes de testar a alteração de "Minha identificação" no Perfil.
