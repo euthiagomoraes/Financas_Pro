@@ -584,12 +584,32 @@ async function saveProfile(e){
    families=families.map(x=>x.id===activeFamily.id?{...x,tipo}:x);
  }
 
- if(activeFamily&&familia!==activeFamily.nome){
+ if(activeFamily&&familia!==String(activeFamily.nome||'').trim()){
    if(!isAdmin())return toast('Somente o administrador pode alterar o nome da família.');
-   const fq=await sb.from('familias').update({nome:familia}).eq('id',activeFamily.id);
-   if(fq.error)return toast('Não foi possível alterar o nome da família: '+fq.error.message);
-   activeFamily.nome=familia;
-   families=families.map(x=>x.id===activeFamily.id?{...x,nome:familia}:x);
+
+   // O UPDATE antigo aceitava uma resposta vazia como sucesso. Com RLS,
+   // isso pode significar que nenhuma linha foi realmente alterada.
+   // Agora pedimos a linha atualizada de volta e só alteramos o estado local
+   // depois que o Supabase confirmar a persistência.
+   const familyId=activeFamily.id;
+   const fq=await sb.from('familias')
+     .update({nome:familia})
+     .eq('id',familyId)
+     .select('id,nome')
+     .maybeSingle();
+
+   if(fq.error){
+     return toast('Não foi possível alterar o nome da família: '+fq.error.message);
+   }
+   if(!fq.data){
+     return toast('O nome não foi salvo. Verifique se seu usuário é administrador desta família e se a política RLS de UPDATE da tabela familias está ativa.');
+   }
+   if(String(fq.data.nome||'').trim()!==familia){
+     return toast('O Supabase não confirmou o novo nome da família.');
+   }
+
+   activeFamily={...activeFamily,nome:fq.data.nome};
+   families=families.map(x=>x.id===familyId?{...x,nome:fq.data.nome}:x);
  }
  if(novaSenha){
    const sq=await sb.auth.updateUser({password:novaSenha});
