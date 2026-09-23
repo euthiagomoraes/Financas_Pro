@@ -533,16 +533,23 @@ async function removeFamilyMember(id){if(!isAdmin())return toast('Somente admini
 async function saveProfile(e){e.preventDefault();const f=new FormData(e.currentTarget);const nome=String(f.get('nome')||'').trim();const familia=String(f.get('familia')||'').trim();const tipo=String(f.get('tipo')||'').trim();const novaSenha=String(f.get('novaSenha')||'');const confirmarSenha=String(f.get('confirmarSenha')||'');if(!nome||!familia||!tipo)return toast('Preencha os campos obrigatórios.');if(novaSenha||confirmarSenha){if(novaSenha.length<6)return toast('A nova senha deve ter pelo menos 6 caracteres.');if(novaSenha!==confirmarSenha)return toast('As senhas não conferem.');}
  let q=await sb.from('profiles').upsert({id:user.id,nome,email:user.email,ativo:true,updated_at:new Date().toISOString()},{onConflict:'id'});if(q.error){q=await sb.from('perfis').upsert({id:user.id,nome,email:user.email,atualizado_em:new Date().toISOString()},{onConflict:'id'});}if(q.error)return toast(q.error.message);
  if(activeFamily){
-  const rpc=await sb.rpc('update_my_family_identification',{
-   p_family_id:activeFamily.id,
-   p_tipo:tipo
-  });
-  if(rpc.error){
-   console.error('Identificação:',rpc.error);
-   return toast('Não foi possível salvar sua identificação: '+rpc.error.message);
+  let memberId=activeFamily.member_id;
+  if(!memberId){
+   await loadFamilies();
+   memberId=activeFamily?.member_id;
   }
-  const savedRow=Array.isArray(rpc.data)?rpc.data[0]:rpc.data;
-  if(String(savedRow?.tipo||'').trim()!==tipo){
+  if(!memberId)return toast('Não foi possível localizar seu vínculo com a família. Recarregue a página e tente novamente.');
+  const updated=await sb.from('familia_membros')
+   .update({tipo})
+   .eq('id',memberId)
+   .eq('usuario_id',user.id)
+   .select('id,tipo')
+   .maybeSingle();
+  if(updated.error){
+   console.error('Identificação:',updated.error);
+   return toast('Não foi possível salvar sua identificação: '+updated.error.message);
+  }
+  if(!updated.data || String(updated.data.tipo||'').trim()!==tipo){
    return toast('O Supabase não confirmou a identificação salva. Execute o SQL de correção e tente novamente.');
   }
   activeFamily={...activeFamily,tipo};
