@@ -185,3 +185,18 @@
 .notifications-panel{max-height:min(70vh,520px);overflow:auto}
 
 .dashboard-link{cursor:pointer;transition:transform .18s ease,box-shadow .18s ease}.dashboard-link:focus-visible{outline:3px solid var(--green-2);outline-offset:3px}.dashboard-link:hover{transform:translateY(-2px)}
+
+.profile-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  overflow: hidden;
+  padding: 0;
+}
+
+.profile-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
