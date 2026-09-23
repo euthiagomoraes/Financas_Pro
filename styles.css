@@ -204,7 +204,7 @@
 @media(min-width:761px){
   .sidebar{transition:width .22s ease,padding .22s ease}
   .main{transition:margin-left .22s ease}
-  .sidebar-collapse{position:absolute;top:18px;right:12px;width:32px;height:32px;display:grid;place-items:center;border:1px solid rgba(255,255,255,.18);border-radius:9px;background:rgba(255,255,255,.08);color:#fff;cursor:pointer;z-index:2}
+  .sidebar-collapse{position:absolute;top:70%;right:-12px;transform:translateY(-50%);width:32px;height:32px;display:grid;place-items:center;border:1px solid rgba(255,255,255,.18);border-radius:9px;background:rgba(255,255,255,.08);color:#fff;cursor:pointer;z-index:2}
   .sidebar-collapse:hover{background:rgba(255,255,255,.16)}
   body.sidebar-collapsed .sidebar{width:78px;padding-left:10px;padding-right:10px}
   body.sidebar-collapsed .main{margin-left:78px}
@@ -214,6 +214,5 @@
   body.sidebar-collapsed .nav button.active:before{display:none}
   body.sidebar-collapsed .user-mini{justify-content:center;padding-left:0;padding-right:0}
   body.sidebar-collapsed .logout{display:none}
-  body.sidebar-collapsed .sidebar-collapse{right:23px}
 }
 @media(max-width:760px){.sidebar-collapse{display:none!important}}
