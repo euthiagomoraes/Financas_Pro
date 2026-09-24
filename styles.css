@@ -314,3 +314,40 @@
 /* Empréstimos — gestão individual e em lote das parcelas */
 .parcel-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:16px 0 10px}.parcel-head h3{margin:0}.select-all-loan,.parcel-check{display:inline-flex;align-items:center;gap:7px;font-size:11px;color:var(--muted);font-weight:700}.parcel-check input,.select-all-loan input{width:17px;height:17px;accent-color:var(--green);cursor:pointer}.loan-parcel-toolbar{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;margin-bottom:10px;border:1px solid var(--line);border-radius:13px;background:#f6faf6;color:var(--muted);font-size:11px}.loan-parcel-toolbar strong{color:var(--ink)}.form-actions-inline{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:6px}.btn-xs{padding:7px 9px;border-radius:9px;font-size:10px}.btn:disabled{opacity:.45;cursor:not-allowed}.loan-parcel-row{grid-template-columns:24px 42px minmax(0,1fr) auto auto auto;align-items:center}.loan-parcel-row .parcel-actions{display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end}.loan-parcel-row .parcel-check{justify-content:center}.loan-parcel-row .parcel-copy small{display:block}.loan-parcel-row .status{justify-self:start}.parcel-check input{margin:0}
 @media(max-width:760px){.loan-parcel-toolbar{align-items:flex-start;flex-direction:column}.form-actions-inline{width:100%;justify-content:flex-start}.loan-parcel-row{grid-template-columns:24px 34px 1fr}.loan-parcel-row .parcel-value{grid-column:3}.loan-parcel-row .status{grid-column:3;justify-self:start}.loan-parcel-row .parcel-actions{grid-column:3;justify-content:flex-start}.parcel-head{align-items:flex-start;flex-direction:column}}
+
+/* Empréstimos v6 — navegação e histórico de parcelas responsivos */
+.loan-card-actions{align-items:center;gap:10px}
+.loan-card-buttons{display:flex;align-items:center;gap:7px;flex-wrap:wrap;justify-content:flex-end}
+.loan-card-buttons .btn{white-space:nowrap}
+.loan-parcel-modal{width:min(760px,100%)}
+.loan-parcel-modal .loan-detail-summary{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px 18px}
+.loan-parcel-modal .loan-detail-summary p{margin:0}
+.loan-parcel-modal .parcel-list{max-height:52vh;padding-right:2px}
+@media(max-width:760px){
+  .loan-card{padding:14px}
+  .loan-card-actions{align-items:flex-start;flex-direction:column;gap:10px}
+  .loan-card-buttons{width:100%;justify-content:flex-start}
+  .loan-card-buttons .btn,.loan-card-buttons .link-btn{min-height:36px}
+  .loan-parcel-modal{width:100%;padding:16px}
+  .loan-parcel-modal .loan-detail-summary{grid-template-columns:1fr;gap:7px}
+  .loan-parcel-modal .modal-head h2{font-size:16px;line-height:1.3;padding-right:8px}
+  .loan-parcel-modal .parcel-head{margin-top:14px}
+  .loan-parcel-modal .loan-parcel-toolbar{position:sticky;top:0;z-index:2;background:var(--paper)}
+  .loan-parcel-modal .loan-parcel-toolbar .form-actions-inline{width:100%;display:grid;grid-template-columns:1fr;gap:6px}
+  .loan-parcel-modal .loan-parcel-toolbar .btn{width:100%;justify-content:center}
+  .loan-parcel-modal .loan-parcel-row{grid-template-columns:28px 30px minmax(0,1fr);gap:7px;padding:10px}
+  .loan-parcel-modal .loan-parcel-row .parcel-number{font-weight:800}
+  .loan-parcel-modal .loan-parcel-row .parcel-copy{min-width:0}
+  .loan-parcel-modal .loan-parcel-row .parcel-copy strong,.loan-parcel-modal .loan-parcel-row .parcel-copy small{overflow-wrap:anywhere}
+  .loan-parcel-modal .loan-parcel-row .parcel-value{grid-column:3;justify-self:start}
+  .loan-parcel-modal .loan-parcel-row .status{grid-column:3;justify-self:start}
+  .loan-parcel-modal .loan-parcel-row .parcel-actions{grid-column:3;justify-content:flex-start;width:100%}
+  .loan-parcel-modal .loan-parcel-row .parcel-actions .btn{flex:1 1 110px;justify-content:center;min-width:0}
+}
+@media(max-width:420px){
+  .loan-card-buttons{display:grid;grid-template-columns:1fr 1fr;width:100%}
+  .loan-card-buttons .btn,.loan-card-buttons .link-btn{width:100%;justify-content:center}
+  .loan-parcel-modal{padding:12px;border-radius:18px}
+  .loan-parcel-modal .loan-parcel-row{grid-template-columns:26px 28px minmax(0,1fr);padding:9px}
+  .loan-parcel-modal .loan-parcel-row .parcel-actions{display:grid;grid-template-columns:1fr 1fr}
+}
