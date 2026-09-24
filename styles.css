@@ -282,3 +282,26 @@
 
 /* Metas: etapas/checklist responsivas */
 .goal-items{display:grid;gap:10px;margin:12px 0 18px}.goal-item{display:flex;align-items:center;gap:12px;padding:12px 14px;border:1px solid var(--border,#e7e7e7);border-radius:12px;background:var(--surface,#fff);cursor:pointer;min-width:0}.goal-item input{width:19px;height:19px;flex:0 0 auto;accent-color:var(--primary,#68856f)}.goal-item span{overflow-wrap:anywhere}.goal-done{text-decoration:line-through;opacity:.6}.meta-step-input{display:flex;gap:8px;margin-bottom:9px}.meta-step-input input{flex:1;min-width:0}.meta-step-input button{flex:0 0 auto}@media(max-width:600px){.goal-item{padding:11px}.meta-step-input{gap:6px}.meta-step-input button{min-width:38px}}
+
+/* Cabeçalho: ações à direita somente no desktop; cabeçalho mobile preservado. */
+@media (min-width: 761px) {
+  .topbar {
+    justify-content: flex-start;
+    gap: 16px;
+  }
+
+  .topbar > .top-actions {
+    margin-left: auto;
+    flex: 0 1 auto;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+  }
+
+  .top-actions > .date-chip,
+  .top-actions > .icon-btn {
+    flex: 0 0 auto;
+  }
+}
