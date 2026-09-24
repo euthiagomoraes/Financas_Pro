@@ -36,3 +36,13 @@ A Área da Família também passou a carregar `avatar_url` dos membros em `profi
 ### Correção da identificação do usuário
 
 Execute `corrigir-identificacao.sql` no SQL Editor do Supabase antes de testar a alteração de "Minha identificação" no Perfil.
+
+## Módulo Contas — Recorrentes e Parceladas
+
+A revisão atual adiciona:
+- **Contas Recorrentes**: Água, Luz, Gás, Internet, Aluguel, Condomínio, IPTU, Seguro e Outros, com geração mensal e histórico por competência.
+- **Contas Parceladas**: descrição, valor total, quantidade e valor das parcelas, primeiro vencimento e histórico expansível de parcelas.
+- **Contas > Todas**: histórico completo ordenado do mês selecionado para os meses anteriores.
+- **Seletor de competência no topo**: `< mês anterior | mês/ano | próximo mês >`, sincronizado com Dashboard, Contas, Calendário e Relatórios.
+
+Execute a migração `contas_modulo_migration.sql` no Supabase antes de usar os novos cadastros. O conteúdo também foi incorporado ao final de `supabase.sql`.
