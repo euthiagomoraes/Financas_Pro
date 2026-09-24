@@ -12,7 +12,7 @@ const today=()=>iso(new Date());
 const monthName=d=>d.toLocaleDateString('pt-BR',{month:'long',year:'numeric'}).replace(/^./,x=>x.toUpperCase());
 const uid=()=>crypto.randomUUID();
 let user=null, profile=null, page='dashboard', contaFilter='all', loanFilter='Ativos', calendarDate=new Date(), sidebarCollapsed=localStorage.getItem('financas-sidebar-collapsed')==='1', contasMenuOpen=localStorage.getItem('financas-contas-menu-open')==='1';
-let families=[], activeFamily=null;
+let families=[], activeFamily=null, selectedLoanParcelIds=new Set();
 let notifications=[], notificationsChannel=null;
 const state={contas:[],recorrentes:[],emprestimos:[],parcelas:[],categorias:[],assinaturas:[],assinaturaCobrancas:[],parceladas:[],parceladaItens:[],metas:[],metaItens:[]};
 const SERVICE_LOGOS={
@@ -571,20 +571,54 @@ function emprestimos(){
  });
  return `<div class="toolbar"><div><div class="eyebrow">Crédito e compromissos</div><h1>Empréstimos</h1><p class="muted"></p></div><button class="btn btn-primary" data-action="new-loan">${icon('plus',17)} Novo empréstimo</button></div><div class="toolbar-left"><button class="tab ${loanFilter==='Ativos'?'active':''}" data-loan-filter="Ativos">Ativos</button><button class="tab ${loanFilter==='Quitados'?'active':''}" data-loan-filter="Quitados">Quitados</button><button class="tab ${loanFilter==='Todos'?'active':''}" data-loan-filter="Todos">Todos</button></div><div class="loan-grid" style="margin-top:14px">${rows.length?rows.map(l=>{const ps=state.parcelas.filter(p=>p.emprestimo_id===l.id),pg=ps.filter(isPaid).length,pct=l.parcelas?Math.min(100,pg/l.parcelas*100):0,settled=loanIsSettled(l),displayStatus=loanDisplayStatus(l);return `<article class="card loan-card loan-card-clickable" data-open-loan="${l.id}" tabindex="0" role="button"><div class="loan-top"><div class="loan-icon">${icon('hand-coins',21)}</div><span class="status ${settled?'inactive':'active'}">${esc(displayStatus)}</span></div><h3 style="margin-top:13px">${esc(l.descricao)}</h3><p class="muted">${esc(l.credor)}</p><div class="money" style="font-size:22px;margin-top:10px">${money(l.total)}</div><p class="muted">${l.parcelas} parcelas • primeiro vencimento ${dateBR(l.primeira)}</p><div class="progress"><i style="width:${pct}%"></i></div><div class="loan-meta"><span>${pg}/${l.parcelas||0} parcelas pagas</span><button class="link-btn" data-edit-loan="${l.id}">Editar</button></div></article>`}).join(''):'<div class="card empty" style="grid-column:1/-1">Nenhum empréstimo cadastrado.</div>'}</div>`}
 
+function loanParcelRows(ps){
+ return ps.map(p=>{const paid=isPaid(p),st=contaStatus({...p,vencimento:p.data_vencimento});return `<div class="parcel-row loan-parcel-row">
+   <label class="parcel-check" title="Selecionar parcela"><input type="checkbox" data-loan-parcel-check="${p.id}" ${selectedLoanParcelIds.has(p.id)?'checked':''}><span></span></label>
+   <div class="parcel-number">${p.numero_parcela}</div>
+   <div class="parcel-copy"><strong>${dateBR(p.data_vencimento)}</strong><small>${paid&&p.data_pagamento?`Pago em ${dateBR(String(p.data_pagamento).slice(0,10))}`:'Vencimento da parcela'}</small></div>
+   <strong class="parcel-value">${money(p.valor)}</strong>
+   <span class="status ${st.cls}">${st.label}</span>
+   <div class="parcel-actions">
+     ${!paid?`<button type="button" class="btn btn-primary btn-xs" data-loan-row-pay="${p.id}">${icon('check',13)} Pagar</button>`:`<button type="button" class="btn btn-soft btn-xs" data-loan-row-pending="${p.id}">${icon('rotate-ccw',13)} Pendente</button>`}
+     <button type="button" class="btn btn-danger btn-xs" data-loan-row-delete="${p.id}">${icon('trash-2',13)} Excluir</button>
+   </div>
+ </div>`}).join('');
+}
+function loanParcelToolbar(ps){
+ const ids=ps.map(p=>p.id),selected=ids.filter(id=>selectedLoanParcelIds.has(id));
+ return `<div class="loan-parcel-toolbar"><div><strong>${selected.length}</strong> parcela(s) selecionada(s)</div><div class="form-actions-inline">
+   <button type="button" class="btn btn-primary btn-xs" data-loan-bulk-pay ${selected.length?'':'disabled'}>${icon('check-check',13)} Pagar selecionadas</button>
+   <button type="button" class="btn btn-soft btn-xs" data-loan-bulk-pending ${selected.length?'':'disabled'}>${icon('rotate-ccw',13)} Voltar para pendente</button>
+   <button type="button" class="btn btn-danger btn-xs" data-loan-bulk-delete ${selected.length?'':'disabled'}>${icon('trash-2',13)} Excluir selecionadas</button>
+ </div></div>`;
+}
+function bindLoanParcelActions(loanId){
+ document.querySelectorAll('#overlay [data-loan-parcel-check]').forEach(ch=>ch.onchange=()=>{if(ch.checked)selectedLoanParcelIds.add(ch.dataset.loanParcelCheck);else selectedLoanParcelIds.delete(ch.dataset.loanParcelCheck);openLoanDetails(loanId)});
+ document.querySelectorAll('#overlay [data-loan-row-pay]').forEach(b=>b.onclick=()=>updateLoanParcelStatus(b.dataset.loanRowPay,true,loanId));
+ document.querySelectorAll('#overlay [data-loan-row-pending]').forEach(b=>b.onclick=()=>updateLoanParcelStatus(b.dataset.loanRowPending,false,loanId));
+ document.querySelectorAll('#overlay [data-loan-row-delete]').forEach(b=>b.onclick=()=>deleteLoanParcels([b.dataset.loanRowDelete],loanId));
+ $('#overlay [data-loan-bulk-pay]')?.addEventListener('click',()=>{const ids=[...selectedLoanParcelIds].filter(id=>state.parcelas.some(p=>p.id===id&&p.emprestimo_id===loanId));updateLoanParcels(ids,true,loanId)});
+ $('#overlay [data-loan-bulk-pending]')?.addEventListener('click',()=>{const ids=[...selectedLoanParcelIds].filter(id=>state.parcelas.some(p=>p.id===id&&p.emprestimo_id===loanId));updateLoanParcels(ids,false,loanId)});
+ $('#overlay [data-loan-bulk-delete]')?.addEventListener('click',()=>{const ids=[...selectedLoanParcelIds].filter(id=>state.parcelas.some(p=>p.id===id&&p.emprestimo_id===loanId));deleteLoanParcels(ids,loanId)});
+ $('#overlay [data-loan-select-all]')?.addEventListener('change',e=>{const ids=state.parcelas.filter(p=>p.emprestimo_id===loanId).map(p=>p.id);ids.forEach(id=>e.target.checked?selectedLoanParcelIds.add(id):selectedLoanParcelIds.delete(id));openLoanDetails(loanId)});
+}
 function openLoanDetails(id){
  const l=state.emprestimos.find(x=>x.id===id);if(!l)return;
  const ps=state.parcelas.filter(p=>p.emprestimo_id===id).sort((a,b)=>Number(a.numero_parcela)-Number(b.numero_parcela));
- modal(`Empréstimo — ${esc(l.descricao)}`,`<div class="loan-detail-summary"><p><strong>Credor:</strong> ${esc(l.credor||'—')}</p><p><strong>Valor total:</strong> ${money(l.total)}</p><p><strong>Parcelas:</strong> ${l.parcelas}</p><p><strong>Primeiro vencimento:</strong> ${dateBR(l.primeira)}</p><p><strong>Status:</strong> ${esc(l.status)}</p>${l.observacao?`<p><strong>Observação:</strong> ${esc(l.observacao)}</p>`:''}</div><div class="form-actions"><button type="button" class="btn btn-outline" id="cancelForm">Fechar</button><button type="button" class="btn btn-primary" id="editLoanDetails">${icon('pencil',15)} Editar empréstimo</button></div><hr><h3>Parcelas</h3><div class="parcel-list">${ps.length?ps.map(p=>{const paid=isPaid(p),st=contaStatus({...p,vencimento:p.data_vencimento});return `<div class="parcel-row"><div class="parcel-number">${p.numero_parcela}</div><div class="parcel-copy"><strong>${dateBR(p.data_vencimento)}</strong><small>${paid&&p.data_pagamento?`Pago em ${dateBR(p.data_pagamento)}`:'Vencimento da parcela'}</small></div><strong class="parcel-value">${money(p.valor)}</strong><button type="button" class="status status-button ${st.cls}" data-toggle-loan-status="${p.id}">${st.label}</button></div>`}).join(''):'<div class="empty">Nenhuma parcela encontrada.</div>'}</div>`);
- $('#cancelForm').onclick=closeModal;
+ selectedLoanParcelIds=new Set([...selectedLoanParcelIds].filter(pid=>ps.some(p=>p.id===pid)));
+ const allSelected=ps.length>0&&ps.every(p=>selectedLoanParcelIds.has(p.id));
+ modal(`Empréstimo — ${esc(l.descricao)}`,`<div class="loan-detail-summary"><p><strong>Credor:</strong> ${esc(l.credor||'—')}</p><p><strong>Valor total:</strong> ${money(l.total)}</p><p><strong>Parcelas:</strong> ${l.parcelas}</p><p><strong>Primeiro vencimento:</strong> ${dateBR(l.primeira)}</p><p><strong>Status:</strong> ${esc(loanDisplayStatus(l))}</p>${l.observacao?`<p><strong>Observação:</strong> ${esc(l.observacao)}</p>`:''}</div><div class="form-actions"><button type="button" class="btn btn-outline" id="cancelForm">Fechar</button><button type="button" class="btn btn-primary" id="editLoanDetails">${icon('pencil',15)} Editar empréstimo</button></div><hr><div class="parcel-head"><h3>Parcelas</h3><label class="select-all-loan"><input type="checkbox" data-loan-select-all ${allSelected?'checked':''}> Selecionar todas</label></div>${loanParcelToolbar(ps)}<div class="parcel-list">${ps.length?loanParcelRows(ps):'<div class="empty">Nenhuma parcela encontrada.</div>'}</div>`);
+ $('#cancelForm').onclick=()=>{selectedLoanParcelIds.clear();closeModal()};
  $('#editLoanDetails').onclick=()=>editLoan(id);
- document.querySelectorAll('#overlay [data-toggle-loan-status]').forEach(b=>b.onclick=e=>{e.stopPropagation();toggleLoanStatus(b.dataset.toggleLoanStatus)});
+ bindLoanParcelActions(id);
+ refreshIcons();
 }
 
 function editLoan(id){
  const l=state.emprestimos.find(x=>x.id===id);if(!l)return;
  const ps=state.parcelas.filter(p=>p.emprestimo_id===id).sort((a,b)=>Number(a.numero_parcela)-Number(b.numero_parcela));
- modal(`Editar empréstimo — ${esc(l.descricao)}`,`<form id="loanEditForm" class="form-grid"><div class="field"><label>Descrição</label><input name="descricao" required value="${esc(l.descricao)}"></div><div class="field"><label>Credor</label><input name="credor" required value="${esc(l.credor)}"></div><div class="field"><label>Valor contratado</label>${moneyInput('valor_contratado',String(l.valorContratado||l.valor_contratado||0))}</div><div class="field"><label>Quantidade de parcelas</label><input name="quantidade_parcelas" type="number" min="1" step="1" required value="${l.parcelas}"></div><div class="field"><label>Valor da parcela</label>${moneyInput('valor_parcela',String(l.valorParcela||0))}</div><div class="field"><label>Primeiro vencimento</label><input name="primeiro_vencimento" type="date" required value="${esc(l.primeira||'')}"></div><div class="field"><label>Status</label><select name="status"><option ${String(l.status).toLowerCase()==='ativo'?'selected':''}>Ativo</option><option ${String(l.status).toLowerCase()==='quitado'?'selected':''}>Quitado</option><option ${String(l.status).toLowerCase()==='cancelado'?'selected':''}>Cancelado</option></select></div><div class="field full"><label>Observação</label><textarea name="observacao">${esc(l.observacao||'')}</textarea></div><div class="form-actions"><button type="button" class="btn btn-outline" id="cancelForm">Fechar</button><button type="button" class="btn btn-danger" id="deleteLoanForm">${icon('trash-2',15)} Excluir</button><button class="btn btn-primary">Salvar alterações</button></div></form><hr><h3>Parcelas</h3><div class="parcel-list">${ps.length?ps.map(p=>{const paid=isPaid(p),st=contaStatus({...p,vencimento:p.data_vencimento});return `<div class="parcel-row"><div class="parcel-number">${p.numero_parcela}</div><div class="parcel-copy"><strong>${dateBR(p.data_vencimento)}</strong><small>${paid&&p.data_pagamento?`Pago em ${dateBR(p.data_pagamento)}`:'Vencimento da parcela'}</small></div><strong class="parcel-value">${money(p.valor)}</strong><button type="button" class="status status-button ${st.cls}" data-toggle-loan-status="${p.id}">${st.label}</button></div>`}).join(''):'<div class="empty">Nenhuma parcela encontrada.</div>'}</div>`);
- bindMoneyInputs($('#loanEditForm'));$('#cancelForm').onclick=closeModal;$('#deleteLoanForm').onclick=()=>deleteLoan(id);document.querySelectorAll('#overlay [data-toggle-loan-status]').forEach(b=>b.onclick=e=>{e.stopPropagation();toggleLoanStatus(b.dataset.toggleLoanStatus)});
+ modal(`Editar empréstimo — ${esc(l.descricao)}`,`<form id="loanEditForm" class="form-grid"><div class="field"><label>Descrição</label><input name="descricao" required value="${esc(l.descricao)}"></div><div class="field"><label>Credor</label><input name="credor" required value="${esc(l.credor)}"></div><div class="field"><label>Valor contratado</label>${moneyInput('valor_contratado',String(l.valorContratado||l.valor_contratado||0))}</div><div class="field"><label>Quantidade de parcelas</label><input name="quantidade_parcelas" type="number" min="1" step="1" required value="${l.parcelas}"></div><div class="field"><label>Valor da parcela</label>${moneyInput('valor_parcela',String(l.valorParcela||0))}</div><div class="field"><label>Primeiro vencimento</label><input name="primeiro_vencimento" type="date" required value="${esc(l.primeira||'')}"></div><div class="field"><label>Status</label><select name="status"><option ${String(l.status).toLowerCase()==='ativo'?'selected':''}>Ativo</option><option ${String(l.status).toLowerCase()==='quitado'?'selected':''}>Quitado</option><option ${String(l.status).toLowerCase()==='cancelado'?'selected':''}>Cancelado</option></select></div><div class="field full"><label>Observação</label><textarea name="observacao">${esc(l.observacao||'')}</textarea></div><div class="form-actions"><button type="button" class="btn btn-outline" id="cancelForm">Fechar</button><button type="button" class="btn btn-danger" id="deleteLoanForm">${icon('trash-2',15)} Excluir</button><button class="btn btn-primary">Salvar alterações</button></div></form><hr><h3>Parcelas</h3>${loanParcelToolbar(ps)}<div class="parcel-list">${ps.length?loanParcelRows(ps):'<div class="empty">Nenhuma parcela encontrada.</div>'}</div>`);
+ bindMoneyInputs($('#loanEditForm'));$('#cancelForm').onclick=()=>{selectedLoanParcelIds.clear();closeModal()};$('#deleteLoanForm').onclick=()=>deleteLoan(id);bindLoanParcelActions(id);refreshIcons();
  $('#loanEditForm').onsubmit=async e=>{e.preventDefault();const f=new FormData(e.currentTarget),q=Number(f.get('quantidade_parcelas')),vp=parseMoney(f.get('valor_parcela')),vc=parseMoney(f.get('valor_contratado'));if(!q||q<1||vp<=0)return toast('Confira quantidade e valor da parcela.');const patch={descricao:String(f.get('descricao')||'').trim(),credor:String(f.get('credor')||'').trim(),valor_contratado:vc,valor_total:q*vp,quantidade_parcelas:q,valor_parcela:vp,primeiro_vencimento:f.get('primeiro_vencimento'),status:f.get('status'),observacao:f.get('observacao')||null,atualizado_em:new Date().toISOString()};let r=await sb.from('emprestimos').update(patch).eq('id',id).eq('usuario_id',user.id);if(r.error&&r.error.code==='23514')r=await sb.from('emprestimos').update({...patch,status:String(patch.status).toLowerCase()}).eq('id',id).eq('usuario_id',user.id);if(r.error)return toast(`Não foi possível atualizar: ${r.error.message}`);const existing=state.parcelas.filter(p=>p.emprestimo_id===id);const first=new Date(patch.primeiro_vencimento+'T12:00:00');for(let i=0;i<Math.min(q,existing.length);i++){const d=new Date(first.getFullYear(),first.getMonth()+i,first.getDate());const u=await sb.from('emprestimo_parcelas').update({numero_parcela:i+1,data_vencimento:iso(d),valor:vp,atualizado_em:new Date().toISOString()}).eq('id',existing[i].id).eq('usuario_id',user.id);if(u.error)return toast(`Empréstimo salvo, mas houve erro na parcela ${i+1}: ${u.error.message}`)}if(q>existing.length){const extra=Array.from({length:q-existing.length},(_,j)=>{const i=existing.length+j,d=new Date(first.getFullYear(),first.getMonth()+i,first.getDate());return{emprestimo_id:id,usuario_id:user.id,familia_id:activeFamily?.id,numero_parcela:i+1,data_vencimento:iso(d),valor:vp,status:'Pendente',valor_pago:0,data_pagamento:null,observacao:null}});const ins=await sb.from('emprestimo_parcelas').insert(extra);if(ins.error)return toast(`Empréstimo salvo, mas não foi possível criar parcelas: ${ins.error.message}`)}if(q<existing.length){const ids=existing.slice(q).map(x=>x.id);const del=await sb.from('emprestimo_parcelas').delete().in('id',ids).eq('usuario_id',user.id);if(del.error)return toast(`Empréstimo salvo, mas não foi possível remover parcelas excedentes: ${del.error.message}`)}closeModal();await loadData();render();toast('Empréstimo atualizado com sucesso.')}}
 
 function newLoan(){modal('Novo empréstimo',`<form id="loanForm" class="form-grid"><div class="field"><label>Descrição</label><input name="descricao" required></div><div class="field"><label>Credor</label><input name="credor" required></div><div class="field"><label>Valor contratado</label>${moneyInput('valor_contratado')}</div><div class="field"><label>Quantidade de parcelas</label><input name="quantidade_parcelas" type="number" inputmode="numeric" min="1" step="1" required></div><div class="field"><label>Valor da parcela</label>${moneyInput('valor_parcela')}</div><div class="field"><label>Valor total</label>${moneyInput('valor_total','',true,'readonly aria-readonly="true"')}</div><div class="field"><label>Primeiro vencimento</label><input name="primeiro_vencimento" type="date" value="${today()}" required></div><div class="field"><label>Status</label><select name="status"><option>Ativo</option><option>Quitado</option><option>Cancelado</option></select></div><div class="field full"><label>Observação</label><textarea name="observacao"></textarea></div><div class="form-actions"><button type="button" class="btn btn-outline" id="cancelForm">Cancelar</button><button class="btn btn-primary">Salvar empréstimo</button></div></form>`);bindMoneyInputs($('#loanForm'));const qty=$('#loanForm [name="quantidade_parcelas"]'),inst=$('#loanForm [name="valor_parcela"]'),total=$('#loanForm [name="valor_total"]');const updateTotal=()=>{const q=Number(qty.value)||0,v=parseMoney(inst.value);total.value=q&&v?money(q*v):'R$ 0,00'};qty.addEventListener('input',updateTotal);inst.addEventListener('input',updateTotal);inst.addEventListener('blur',updateTotal);$('#cancelForm').onclick=closeModal;$('#loanForm').onsubmit=async e=>{e.preventDefault();const f=new FormData(e.currentTarget),q=Number(f.get('quantidade_parcelas')),vp=parseMoney(f.get('valor_parcela')),vc=parseMoney(f.get('valor_contratado')),vt=q*vp;if(!q||q<1)return toast('Informe a quantidade de parcelas.');if(vp<=0)return toast('Informe o valor da parcela.');if(vc<0)return toast('Valor contratado inválido.');const p={usuario_id:user.id,familia_id:activeFamily?.id,descricao:String(f.get('descricao')).trim(),credor:String(f.get('credor')).trim(),valor_contratado:vc,valor_total:vt,quantidade_parcelas:q,valor_parcela:vp,primeiro_vencimento:f.get('primeiro_vencimento'),status:f.get('status'),observacao:f.get('observacao')||null};let loanResult=await sb.from('emprestimos').insert(p).select('id').single();if(loanResult.error&&loanResult.error.code==='23514'){loanResult=await sb.from('emprestimos').insert({...p,status:String(p.status).toLowerCase()}).select('id').single()}if(loanResult.error)return toast(`Não foi possível gravar o empréstimo: ${loanResult.error.message}`);const data=loanResult.data;const first=new Date(p.primeiro_vencimento+'T12:00:00');const ps=Array.from({length:q},(_,i)=>{const d=new Date(first.getFullYear(),first.getMonth()+i,first.getDate());return{emprestimo_id:data.id,usuario_id:user.id,familia_id:activeFamily?.id,numero_parcela:i+1,data_vencimento:iso(d),valor:vp,status:'Pendente',valor_pago:0,data_pagamento:null,observacao:null}});let parcelResult=await sb.from('emprestimo_parcelas').insert(ps);if(parcelResult.error&&parcelResult.error.code==='23514')parcelResult=await sb.from('emprestimo_parcelas').insert(ps.map(x=>({...x,usuario_id:user.id,familia_id:activeFamily?.id,status:'pendente'})));if(parcelResult.error){await sb.from('emprestimos').delete().eq('id',data.id).eq('usuario_id',user.id);return toast(`As parcelas não foram gravadas. O empréstimo foi revertido: ${parcelResult.error.message}`)}closeModal();await loadData();render();toast('Empréstimo e parcelas gravados com sucesso.')}}
@@ -612,21 +646,53 @@ async function toggleContaStatus(id){
  if(error)return toast(error.message);await loadData();render();if(!paid)showAlicePopup('paid');toast(paid?'Conta voltou para pendente.':'Conta marcada como paga.');
 }
 
+async function updateLoanParcelStatus(id,paid,loanId=null){
+ const p=state.parcelas.find(x=>x.id===id);if(!p)return;
+ const paidAt=paid?new Date().toISOString():null;
+ const lowerPatch=paid?{status:'pago',valor_pago:Number(p.valor)||0,data_pagamento:paidAt,atualizado_em:paidAt}:{status:'pendente',valor_pago:0,data_pagamento:null,atualizado_em:new Date().toISOString()};
+ let result=await sb.from('emprestimo_parcelas').update(lowerPatch).eq('id',id).select('id,status,valor_pago,data_pagamento').maybeSingle();
+ if(result.error||!result.data){
+   const fallbackPatch={...lowerPatch,status:paid?'Pago':'Pendente'};
+   result=await sb.from('emprestimo_parcelas').update(fallbackPatch).eq('id',id).select('id,status,valor_pago,data_pagamento').maybeSingle();
+ }
+ if(result.error||!result.data){console.error('Erro ao persistir status da parcela:',result.error);return toast(`Não foi possível salvar o pagamento da parcela: ${result.error?.message||'registro não localizado pelas permissões atuais'}`)}
+ selectedLoanParcelIds.delete(id);
+ await loadData();
+ if(loanId){openLoanDetails(loanId)}else render();
+ if(paid)showAlicePopup('paid');
+ toast(paid?'Parcela marcada como paga.':'Parcela voltou para pendente.');
+}
+async function updateLoanParcels(ids,paid,loanId){
+ const clean=[...new Set(ids)].filter(Boolean);if(!clean.length)return toast('Selecione ao menos uma parcela.');
+ if(paid&&!confirm(`Marcar ${clean.length} parcela(s) como paga(s)?`))return;
+ if(!paid&&!confirm(`Voltar ${clean.length} parcela(s) para pendente?`))return;
+ for(const id of clean){
+   const p=state.parcelas.find(x=>x.id===id);if(!p)continue;
+   const paidAt=paid?new Date().toISOString():null;
+   const patch=paid?{status:'pago',valor_pago:Number(p.valor)||0,data_pagamento:paidAt,atualizado_em:paidAt}:{status:'pendente',valor_pago:0,data_pagamento:null,atualizado_em:new Date().toISOString()};
+   let r=await sb.from('emprestimo_parcelas').update(patch).eq('id',id).select('id,status').maybeSingle();
+   if(r.error||!r.data){r=await sb.from('emprestimo_parcelas').update({...patch,status:paid?'Pago':'Pendente'}).eq('id',id).select('id,status').maybeSingle();}
+   if(r.error||!r.data){console.error('Falha na parcela',id,r.error);return toast(`Não foi possível atualizar todas as parcelas. Falha na parcela ${p.numero_parcela}.`)}
+   selectedLoanParcelIds.delete(id);
+ }
+ await loadData();
+ if(loanId)openLoanDetails(loanId);else render();
+ if(paid)showAlicePopup('paid');
+ toast(paid?'Parcelas marcadas como pagas.':'Parcelas voltaram para pendente.');
+}
+async function deleteLoanParcels(ids,loanId){
+ const clean=[...new Set(ids)].filter(Boolean);if(!clean.length)return toast('Selecione ao menos uma parcela.');
+ if(!confirm(`Excluir ${clean.length} parcela(s) selecionada(s)? Esta ação não pode ser desfeita.`))return;
+ const r=await sb.from('emprestimo_parcelas').delete().in('id',clean).select('id');
+ if(r.error)return toast(`Não foi possível excluir as parcelas: ${r.error.message}`);
+ const removed=new Set((r.data||[]).map(x=>x.id));clean.forEach(id=>selectedLoanParcelIds.delete(id));
+ await loadData();
+ if(loanId)openLoanDetails(loanId);else render();
+ toast(`${removed.size} parcela(s) excluída(s).`);
+}
 async function toggleLoanStatus(id){
  const p=state.parcelas.find(x=>x.id===id);if(!p)return;
- const paid=isPaid(p);
- const nextStatus=paid?'pendente':'pago';
- const fallbackStatus=paid?'Pendente':'Pago';
- const basePatch=paid?{status:nextStatus,valor_pago:0,data_pagamento:null}:{status:nextStatus,valor_pago:Number(p.valor)||0,data_pagamento:today()};
- let result=await sb.from('emprestimo_parcelas').update(basePatch).eq('id',id).eq('usuario_id',user.id);
- if(result.error){
-   result=await sb.from('emprestimo_parcelas').update({...basePatch,status:fallbackStatus}).eq('id',id).eq('usuario_id',user.id);
- }
- if(result.error){console.error('Erro ao alterar status da parcela:',result.error);return toast(`Não foi possível alterar a parcela: ${result.error.message||'verifique o status aceito no banco'}`)}
- await loadData();
- const overlay=$('#overlay');
- if(overlay){const loanId=p.emprestimo_id;openLoanDetails(loanId)}else render();
- if(!paid)showAlicePopup('paid');toast(paid?'Parcela voltou para pendente.':'Parcela marcada como paga.');
+ return updateLoanParcelStatus(id,!isPaid(p),p.emprestimo_id);
 }
 
 async function deleteRow(table,id,msg){
