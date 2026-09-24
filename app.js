@@ -449,6 +449,42 @@ async function resolveContaCategoryId(rawValue){
     </form>
   `;
 }
+async function ensureContaFamilyId(){
+ const fid=activeFamily?.id||null;
+ if(fid)return fid;
+ await loadFamilies();
+ if(activeFamily?.id)return activeFamily.id;
+ toast('Nenhuma família ativa foi encontrada.');
+ return null;
+}
+
+async function saveContaRecord({edit,c,basePayload,recorrente,fid,status}){
+ let payload={...basePayload,recorrente};
+ let result=edit
+   ?await sb.from('contas').update(payload).eq('id',c.id).eq('familia_id',fid).select('id').single()
+   :await sb.from('contas').insert({...payload,usuario_id:user.id,familia_id:fid}).select('id').single();
+
+ if(result.error&&(result.error.code==='PGRST204'||result.error.code==='42703'||/recorrente/i.test(result.error.message||''))){
+   result=edit
+     ?await sb.from('contas').update(basePayload).eq('id',c.id).eq('familia_id',fid).select('id').single()
+     :await sb.from('contas').insert({...basePayload,usuario_id:user.id,familia_id:fid}).select('id').single();
+   if(!result.error&&recorrente)toast('Conta salva. Para persistir o campo recorrente, execute a migração SQL.');
+ }
+
+ if(result.error&&(result.error.code==='23514'||result.error.code==='22P02')){
+   const alt={...basePayload,status:status==='Pago'?'pago':'pendente'};
+   result=edit
+     ?await sb.from('contas').update({...alt,recorrente}).eq('id',c.id).eq('familia_id',fid).select('id').single()
+     :await sb.from('contas').insert({...alt,recorrente,usuario_id:user.id,familia_id:fid}).select('id').single();
+   if(result.error&&(result.error.code==='PGRST204'||result.error.code==='42703'||/recorrente/i.test(result.error.message||''))){
+     result=edit
+       ?await sb.from('contas').update(alt).eq('id',c.id).eq('familia_id',fid).select('id').single()
+       :await sb.from('contas').insert({...alt,usuario_id:user.id,familia_id:fid}).select('id').single();
+   }
+ }
+ return result;
+}
+
 function openContaForm(c=null){
  const edit=!!c;
  modal(edit?'Editar conta':'Lançar nova conta',contaFormMarkup(c));
@@ -456,30 +492,45 @@ function openContaForm(c=null){
  $('#cancelForm').onclick=closeModal;
  $('#deleteContaForm')?.addEventListener('click',()=>deleteRow('contas',c.id,'Conta excluída.'));
  $('#contaForm').onsubmit=async e=>{
-  e.preventDefault();
-  const f=new FormData(e.currentTarget),status=f.get('status'),valor=parseMoney(f.get('valor'));
-  if(valor<=0)return toast('Informe um valor maior que zero.');
-  let categoriaId=null;
-  try{categoriaId=await resolveContaCategoryId(f.get('categoria_id'));}
-  catch(err){console.error(err);return toast(err.message||'Não foi possível salvar a categoria.');}
-  const basePayload={descricao:String(f.get('descricao')||'').trim(),categoria_id:categoriaId,valor,data_vencimento:f.get('data_vencimento'),status,valor_pago:status==='Pago'?valor:0,data_pagamento:status==='Pago'?today():null,observacao:f.get('observacao')||null};
-  const recorrente=f.get('recorrente')==='true';
-  let payload={...basePayload,recorrente};
-  let result=edit?await sb.from('contas').update(payload).eq('id',c.id).eq('familia_id',activeFamily?.id):await sb.from('contas').insert({...payload,usuario_id:user.id,familia_id:activeFamily?.id});
-  if(result.error&&(result.error.code==='PGRST204'||result.error.code==='42703'||/recorrente/i.test(result.error.message||''))){
-   result=edit?await sb.from('contas').update(basePayload).eq('id',c.id).eq('familia_id',activeFamily?.id):await sb.from('contas').insert({...basePayload,usuario_id:user.id,familia_id:activeFamily?.id});
-   if(!result.error&&recorrente)toast('Conta salva, mas o campo recorrente ainda não existe no banco. Execute a migração SQL da revisão.');
-  }
-  if(result.error&&(result.error.code==='23514'||result.error.code==='22P02')){
-   const alt={...basePayload,status:status==='Pago'?'pago':'pendente'};
-   result=edit?await sb.from('contas').update({...alt,recorrente}).eq('id',c.id).eq('familia_id',activeFamily?.id):await sb.from('contas').insert({...alt,recorrente,usuario_id:user.id,familia_id:activeFamily?.id});
-   if(result.error&&(result.error.code==='PGRST204'||result.error.code==='42703'||/recorrente/i.test(result.error.message||''))){
-    result=edit?await sb.from('contas').update(alt).eq('id',c.id).eq('familia_id',activeFamily?.id):await sb.from('contas').insert({...alt,usuario_id:user.id,familia_id:activeFamily?.id})
+   e.preventDefault();
+   const fid=await ensureContaFamilyId();
+   if(!fid)return;
+   const f=new FormData(e.currentTarget);
+   const status=String(f.get('status')||'Pendente');
+   const valor=parseMoney(f.get('valor'));
+   if(valor<=0)return toast('Informe um valor maior que zero.');
+   let categoriaId=null;
+   try{categoriaId=await resolveContaCategoryId(f.get('categoria_id'));}
+   catch(err){console.error(err);return toast(err.message||'Não foi possível salvar a categoria.');}
+   const basePayload={
+     descricao:String(f.get('descricao')||'').trim(),
+     categoria_id:categoriaId,
+     valor,
+     data_vencimento:f.get('data_vencimento'),
+     status,
+     valor_pago:status==='Pago'?valor:0,
+     data_pagamento:status==='Pago'?today():null,
+     observacao:String(f.get('observacao')||'').trim()||null
+   };
+   const recorrente=f.get('recorrente')==='true';
+   const submit=e.currentTarget.querySelector('button[type="submit"]')||e.currentTarget.querySelector('.btn-primary');
+   if(submit){submit.disabled=true;submit.dataset.originalText=submit.textContent;submit.textContent=edit?'Salvando...':'Lançando...';}
+   try{
+     const result=await saveContaRecord({edit,c,basePayload,recorrente,fid,status});
+     if(result.error){
+       console.error('Erro ao salvar conta:',result.error);
+       return toast(`Não foi possível ${edit?'atualizar':'gravar'} a conta: ${result.error.message||'verifique as permissões do Supabase'}`);
+     }
+     if(!result.data?.id)return toast(`Não foi possível ${edit?'confirmar a atualização':'confirmar a gravação'} da conta.`);
+     closeModal();
+     await loadData();
+     render();
+     if(!edit)showAlicePopup('new');
+     toast(edit?'Conta atualizada com sucesso.':'Conta gravada com sucesso.');
+   }finally{
+     if(submit)submit.disabled=false;
    }
-  }
-  if(result.error)return toast(`Não foi possível ${edit?'atualizar':'gravar'} a conta: ${result.error.message}`);
-  closeModal();await loadData();render();if(!edit)showAlicePopup('new');toast(edit?'Conta atualizada com sucesso.':'Conta gravada com sucesso.')
- }
+ };
 }
 function newConta(){openContaForm()}
 function editConta(id){const c=state.contas.find(x=>x.id===id);if(c)openContaForm(c)}
@@ -502,10 +553,21 @@ async function paySubscriptionCharge(id){const charge=state.assinaturaCobrancas.
 
 async function toggleContaStatus(id){
  const c=state.contas.find(x=>x.id===id);if(!c)return;
+ const fid=c.familia_id||activeFamily?.id;
+ if(!fid)return toast('Nenhuma família ativa foi encontrada.');
  const paid=isPaid(c);
- const patch=paid?{status:'Pendente',valor_pago:0,data_pagamento:null}:{status:'Pago',valor_pago:Number(c.valor)||0,data_pagamento:today()};
- const {error}=await sb.from('contas').update(patch).eq('id',id).eq('usuario_id',user.id);
- if(error)return toast(error.message);await loadData();render();if(!paid)showAlicePopup('paid');toast(paid?'Conta voltou para pendente.':'Conta marcada como paga.');
+ const patch=paid
+   ?{status:'Pendente',valor_pago:0,data_pagamento:null}
+   :{status:'Pago',valor_pago:Number(c.valor)||0,data_pagamento:today()};
+ let result=await sb.from('contas').update(patch).eq('id',id).eq('familia_id',fid).select('id').single();
+ if(result.error&&(result.error.code==='23514'||result.error.code==='22P02')){
+   const fallback={...patch,status:paid?'pendente':'pago'};
+   result=await sb.from('contas').update(fallback).eq('id',id).eq('familia_id',fid).select('id').single();
+ }
+ if(result.error)return toast(`Não foi possível alterar o status da conta: ${result.error.message}`);
+ await loadData();render();
+ if(!paid)showAlicePopup('paid');
+ toast(paid?'Conta voltou para pendente.':'Conta marcada como paga.');
 }
 
 async function toggleLoanStatus(id){
@@ -525,7 +587,21 @@ async function toggleLoanStatus(id){
  if(!paid)showAlicePopup('paid');toast(paid?'Parcela voltou para pendente.':'Parcela marcada como paga.');
 }
 
-async function deleteRow(table,id,msg){if(!confirm('Excluir este registro?'))return;const {data,error}=await sb.from(table).delete().eq('id',id).eq('usuario_id',user.id).select('id');if(error)return toast(error.message);if(!data?.length)return toast('Nenhum registro foi excluído.');await loadData();render();toast(msg)}
+async function deleteRow(table,id,msg){
+ if(!confirm('Excluir este registro?'))return;
+ let query;
+ if(table==='contas'){
+   const fid=activeFamily?.id;
+   if(!fid)return toast('Nenhuma família ativa foi encontrada.');
+   query=sb.from(table).delete().eq('id',id).eq('familia_id',fid).select('id').single();
+ }else{
+   query=sb.from(table).delete().eq('id',id).eq('usuario_id',user.id).select('id').single();
+ }
+ const {data,error}=await query;
+ if(error)return toast(`Não foi possível excluir: ${error.message}`);
+ if(!data?.id)return toast('Nenhum registro foi excluído.');
+ await loadData();render();toast(msg);
+}
 async function deleteLoan(id){if(!confirm('Excluir o empréstimo e suas parcelas?'))return;const child=await sb.from('emprestimo_parcelas').delete().eq('emprestimo_id',id).eq('usuario_id',user.id);if(child.error)return toast(`Não foi possível excluir as parcelas: ${child.error.message}`);const parent=await sb.from('emprestimos').delete().eq('id',id).eq('usuario_id',user.id);if(parent.error)return toast(`Não foi possível excluir o empréstimo: ${parent.error.message}`);closeModal();await loadData();render();toast('Empréstimo excluído.') }
 
 async function deleteAccount(targetUserId=null){
