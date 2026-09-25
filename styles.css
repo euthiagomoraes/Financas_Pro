@@ -357,3 +357,49 @@
 @media(max-width:760px){.toolbar-left{position:relative}.conta-filter-wrap{flex:0 0 auto}.conta-filter-menu{position:fixed;left:12px;right:12px;top:auto;bottom:78px;width:auto;max-height:68vh;border-radius:16px}.filter-trigger{padding:8px 10px}.toolbar-left .tab{white-space:nowrap}.toolbar-left{gap:6px}}
 
 @media(max-width:760px){.conta-filter-menu{max-height:min(62vh,460px);padding:4px 0}.filter-group{padding:5px 0}.filter-group>strong{padding:4px 12px}.filter-group>button{min-height:34px;padding:7px 12px;font-size:11px}}
+
+/* v11 — metas editáveis e Contas Parceladas mobile */
+@media (max-width: 640px) {
+  .sub-expanded .parcelada-history { overflow: visible !important; }
+  .parcelada-history .data-table { width:100%; min-width:0 !important; table-layout:fixed; }
+  .parcelada-history .data-table thead { display:none; }
+  .parcelada-history .data-table tbody { display:block; width:100%; }
+  .parcelada-history .parcelada-row {
+    display:flex; flex-wrap:wrap; align-items:center; gap:5px 10px;
+    width:100%; padding:11px 0; border-bottom:1px solid var(--border,#e5e7eb);
+  }
+  .parcelada-history .parcelada-row td {
+    display:inline-flex; align-items:baseline; gap:4px; width:auto; min-width:0;
+    padding:2px 0; border:0; white-space:normal; overflow-wrap:anywhere; font-size:11px;
+  }
+  .parcelada-history .parcelada-row td::before {
+    content:attr(data-label) ":"; font-weight:700; color:var(--muted,#737373);
+    flex:0 0 auto; white-space:nowrap;
+  }
+  .parcelada-history .parcelada-row td[data-label="Parcela"] { width:auto; }
+  .parcelada-history .parcelada-row td[data-label="Vencimento"] { width:auto; }
+  .parcelada-history .parcelada-row td[data-label="Valor"] { width:auto; }
+  .parcelada-history .parcelada-row td[data-label="Status"] { width:auto; }
+  .parcelada-history .parcelada-row td[data-label="Pagamento"] { width:auto; }
+  .parcelada-history .parcelada-row td[data-label="Ação"] { width:100%; margin-top:4px; }
+  .parcelada-history .parcelada-row td[data-label="Ação"]::before { display:none; }
+  .parcelada-history .parcelada-row td[data-label="Ação"] .btn {
+    width:auto; min-width:92px; min-height:34px; padding:7px 13px;
+    justify-content:center; white-space:nowrap; font-size:11px;
+  }
+  .parcelada-history .status { font-size:9px; padding:4px 7px; }
+  .sub-expanded h4 { font-size:14px; }
+}
+@media (max-width:420px) {
+  .parcelada-history .parcelada-row { gap:4px 8px; padding:10px 0; }
+  .parcelada-history .parcelada-row td { font-size:10px; }
+  .parcelada-history .parcelada-row td[data-label="Ação"] .btn { min-width:84px; min-height:32px; padding:6px 11px; font-size:10px; }
+}
+
+.meta-step-input input { min-width:0; }
+@media (max-width:600px) {
+  .sub-actions { flex-wrap:wrap; }
+  .sub-actions .btn { flex:1 1 140px; min-width:0; justify-content:center; white-space:normal; }
+  #metaEditForm .form-actions { display:flex; flex-wrap:wrap; }
+  #metaEditForm .form-actions .btn { flex:1 1 130px; justify-content:center; }
+}
