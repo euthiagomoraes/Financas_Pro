@@ -403,3 +403,107 @@
   #metaEditForm .form-actions { display:flex; flex-wrap:wrap; }
   #metaEditForm .form-actions .btn { flex:1 1 130px; justify-content:center; }
 }
+
+/* v12 — Contas Parceladas mobile: layout compacto no formato parcela + dados + ação */
+@media (max-width: 640px) {
+  .parcelada-history .parcelada-row {
+    position: relative;
+    display: block;
+    min-height: 58px;
+    padding: 9px 88px 9px 42px;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: var(--paper);
+    margin-bottom: 7px;
+    box-sizing: border-box;
+  }
+
+  .parcelada-history .parcelada-row td {
+    display: inline-flex;
+    width: auto !important;
+    min-width: 0;
+    margin: 0 8px 3px 0;
+    padding: 0;
+    border: 0;
+    vertical-align: middle;
+    align-items: baseline;
+    gap: 3px;
+    white-space: nowrap;
+    overflow-wrap: normal;
+    word-break: normal;
+    font-size: 10px;
+    line-height: 1.25;
+  }
+
+  .parcelada-history .parcelada-row td::before {
+    content: attr(data-label) ':';
+    font-size: 8px;
+    line-height: 1;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    font-weight: 800;
+    color: var(--muted, #737373);
+    flex: 0 0 auto;
+    white-space: nowrap;
+  }
+
+  .parcelada-history .parcelada-row td[data-label='Parcela'] {
+    position: absolute;
+    left: 10px;
+    top: 10px;
+    width: 28px !important;
+    margin: 0;
+    font-size: 11px;
+    font-weight: 800;
+    justify-content: flex-start;
+  }
+  .parcelada-history .parcelada-row td[data-label='Parcela']::before { display:none; }
+
+  .parcelada-history .parcelada-row td[data-label='Vencimento'] { margin-right: 7px; }
+  .parcelada-history .parcelada-row td[data-label='Status'] { margin-right: 0; }
+  .parcelada-history .parcelada-row td[data-label='Valor'] { margin-right: 7px; }
+  .parcelada-history .parcelada-row td[data-label='Pagamento'] { margin-right: 0; }
+
+  .parcelada-history .parcelada-row td[data-label='Ação'] {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    width: 72px !important;
+    margin: 0;
+    transform: translateY(-50%);
+    justify-content: stretch;
+  }
+  .parcelada-history .parcelada-row td[data-label='Ação']::before { display:none; }
+  .parcelada-history .parcelada-row td[data-label='Ação'] .btn {
+    width: 72px;
+    min-width: 0;
+    min-height: 30px;
+    height: 30px;
+    padding: 5px 7px;
+    border-radius: 9px;
+    font-size: 9px;
+    line-height: 1;
+    white-space: nowrap;
+    justify-content: center;
+  }
+
+  .parcelada-history .parcelada-row .status {
+    font-size: 8px;
+    padding: 3px 6px;
+    line-height: 1.1;
+    white-space: nowrap;
+  }
+}
+
+@media (max-width: 380px) {
+  .parcelada-history .parcelada-row {
+    padding-right: 78px;
+  }
+  .parcelada-history .parcelada-row td {
+    font-size: 9px;
+    margin-right: 5px;
+  }
+  .parcelada-history .parcelada-row td::before { font-size: 7px; }
+  .parcelada-history .parcelada-row td[data-label='Ação'] { right: 6px; width: 66px !important; }
+  .parcelada-history .parcelada-row td[data-label='Ação'] .btn { width: 66px; font-size: 8px; padding: 5px 5px; }
+}
