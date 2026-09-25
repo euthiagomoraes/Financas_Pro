@@ -507,3 +507,123 @@
   .parcelada-history .parcelada-row td[data-label='Ação'] { right: 6px; width: 66px !important; }
   .parcelada-history .parcelada-row td[data-label='Ação'] .btn { width: 66px; font-size: 8px; padding: 5px 5px; }
 }
+
+/* v13 — Contas Parceladas mobile: informações empilhadas e ação fixa à direita */
+@media (max-width: 640px) {
+  .parcelada-history .parcelada-row {
+    display: grid !important;
+    grid-template-columns: 34px minmax(0, 1fr) 72px;
+    align-items: center;
+    gap: 0 8px;
+    min-height: 62px;
+    padding: 9px 8px;
+    overflow: hidden;
+  }
+
+  .parcelada-history .parcelada-row > td[data-label='Parcela'] {
+    position: static !important;
+    grid-column: 1;
+    grid-row: 1;
+    width: auto !important;
+    font-size: 11px;
+    font-weight: 800;
+    margin: 0 !important;
+    padding: 0 !important;
+    display: flex !important;
+    align-items: center;
+    white-space: nowrap;
+  }
+
+  .parcelada-history .parcelada-row > td[data-label='Vencimento'],
+  .parcelada-history .parcelada-row > td[data-label='Valor'],
+  .parcelada-history .parcelada-row > td[data-label='Status'],
+  .parcelada-history .parcelada-row > td[data-label='Pagamento'] {
+    display: none !important;
+  }
+
+  .parcelada-history .parcelada-row > td.parcelada-mobile-info {
+    grid-column: 2;
+    grid-row: 1;
+    display: flex !important;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+    width: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    font-size: 9px;
+    line-height: 1.25;
+    white-space: nowrap;
+    overflow: hidden;
+  }
+
+  .parcelada-mobile-line {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  .parcelada-mobile-line span {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .parcelada-mobile-line b {
+    font-size: 7px;
+    text-transform: uppercase;
+    letter-spacing: .03em;
+    color: var(--muted, #737373);
+  }
+
+  .parcelada-mobile-line .status {
+    display: inline-flex;
+    vertical-align: middle;
+    font-size: 7px;
+    padding: 2px 5px;
+    line-height: 1;
+    white-space: nowrap;
+    font-style: normal;
+  }
+
+  .parcelada-history .parcelada-row > td[data-label='Ação'] {
+    position: static !important;
+    grid-column: 3;
+    grid-row: 1;
+    width: 72px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    display: flex !important;
+    align-items: center;
+    justify-content: flex-end;
+    border: 0 !important;
+  }
+
+  .parcelada-history .parcelada-row > td[data-label='Ação'] .btn {
+    width: 72px;
+    height: 31px;
+    min-height: 31px;
+    padding: 5px 7px;
+    font-size: 9px;
+    border-radius: 9px;
+    white-space: nowrap;
+  }
+}
+
+@media (max-width: 380px) {
+  .parcelada-history .parcelada-row {
+    grid-template-columns: 30px minmax(0, 1fr) 66px;
+    gap: 0 6px;
+    min-height: 60px;
+    padding: 8px 6px;
+  }
+  .parcelada-history .parcelada-row > td.parcelada-mobile-info { font-size: 8px; }
+  .parcelada-mobile-line { gap: 7px; }
+  .parcelada-mobile-line b { font-size: 6.5px; }
+  .parcelada-history .parcelada-row > td[data-label='Ação'] { width: 66px !important; }
+  .parcelada-history .parcelada-row > td[data-label='Ação'] .btn { width: 66px; font-size: 8px; }
+}
